@@ -1,0 +1,128 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        -80
+      ],
+      "id": "9bbc6bff-35c4-44fa-8f01-dde8feea17b5",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search.json?engine=google_maps&q=restaurant+chinois+antananarivo&api_key=b0f8f4db145bcaec71c4f35e99321245c72d076764009fa355d0bff799b91682",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -100,
+        -80
+      ],
+      "id": "706eab8e-a5d5-47a7-87eb-f45864a6ca5a",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const motsChinois = [\n  \"chinois\", \"chinoise\", \"chine\", \"wok\", \"sichuan\", \"pékin\", \"dim sum\",\n  \"tofu\", \"canard laqué\", \"riz\", \"nouilles\", \"asiatique\", \"oriental\", \"baguette\"\n];\n\nfunction compterMots(text) {\n  const contenu = (text || \"\").toLowerCase();\n  return motsChinois.reduce((total, mot) => {\n    const regex = new RegExp(`\\\\b${mot}\\\\b`, 'gi');\n    const count = (contenu.match(regex) || []).length;\n    return total + count;\n  }, 0);\n}\n\nconst searchResults = items[0].json.local_results || [];\n\nconst processedRestaurants = searchResults.map(place => {\n  const nom = place.title || \"\";\n  const description = place.type || place.category || \"\";\n  const motsTrouvés = compterMots(nom + \" \" + description);\n  const totalMots = (nom + \" \" + description).split(/\\s+/).length || 1;\n  \n  const attendus = 0.05 * totalMots; // hypothèse : 5% des mots sont \"chinois\"\n  const chi2 = Math.pow((motsTrouvés - attendus), 2) / attendus;\n\n  return {\n    json: {\n      nom: nom || \"Nom inconnu\",\n      adresse: place.address || \"Adresse inconnue\",\n      téléphone: place.phone || \"Non disponible\",\n      latitude: place.gps_coordinates?.latitude || 0,\n      longitude: place.gps_coordinates?.longitude || 0,\n      spécialité: description || \"Non précisée\",\n      photo: place.thumbnail || \"https://via.placeholder.com/400x300?text=Pas+de+photo\",\n      horaires: place.hours || \"Horaires non précisés\",\n      site_web: place.website || \"Non disponible\",\n      note: place.rating || \"Non disponible\",\n      nombre_avis: place.reviews || 0,\n      chi2_score: parseFloat(chi2.toFixed(2)), // valeur du test khi²\n      pertinence_chinoise: Math.min(100, Math.round(chi2 * 10)) // notation sur 100\n    }\n  };\n});\n\nreturn processedRestaurants;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        120,
+        -80
+      ],
+      "id": "87bbf59e-ed8f-4715-b85e-c513862b2f79",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "jsCode": "const restaurants = $input.all().map(item => item.json);\n\nconst rows = restaurants.map((r, index) => {\n  const lat = r.latitude?.toFixed(6) || 0;\n  const lon = r.longitude?.toFixed(6) || 0;\n  const mapsLink = `https://www.google.com/maps?q=${lat},${lon}&z=15&t=k`;\n  const mapsEmbed = `https://www.google.com/maps?q=${lat},${lon}&output=embed&z=15&t=k`;\n  \n  return `\n    <div class=\"restaurant\" style=\"animation-delay: ${index * 0.1}s;\">\n      <div class=\"image-container\">\n        <img src=\"${r.photo || 'https://via.placeholder.com/400x300?text=Pas+de+photo'}\" alt=\"Photo de ${r.nom || 'restaurant'}\" />\n      </div>\n\n      <div class=\"restaurant-header\">\n        <h2>${r.nom || 'Nom inconnu'}</h2>\n        <p class=\"specialite\">${r.spécialité || r.category || 'Non précisée'}</p>\n      </div>\n\n      <div class=\"restaurant-info\">\n        <p><i class=\"fas fa-map-marker-alt\"></i> ${r.adresse || 'Adresse non disponible'}</p>\n        <p><i class=\"fas fa-phone\"></i> ${r.téléphone || 'Téléphone non disponible'}</p>\n        <p><i class=\"fas fa-clock\"></i> ${r.horaires || 'Horaires non disponibles'}</p>\n        <p><strong>Coordonnées GPS:</strong> ${lat}, ${lon}</p>\n        <p><strong>Indice chinois :</strong> ${r.pertinence_chinoise}/100</p>\n      </div>\n\n      <div class=\"restaurant-actions\">\n        ${r.site_web && r.site_web !== 'Non disponible' ? `<a href=\"${r.site_web}\" target=\"_blank\" class=\"website-link\"><i class=\"fas fa-link\"></i> Site web</a>` : ''}\n        <a href=\"https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}\" target=\"_blank\" class=\"route-button\"><i class=\"fas fa-route\"></i> Itinéraire</a>\n        <a href=\"${mapsLink}\" target=\"_blank\" class=\"maps-link\">Voir sur Google Maps (Satellite)</a>\n      </div>\n\n      <div class=\"map-container\">\n        <iframe\n          src=\"${mapsEmbed}\"\n          width=\"100%\"\n          height=\"250\"\n          style=\"border:0; border-radius:8px;\"\n          allowfullscreen=\"\"\n          loading=\"lazy\"\n          referrerpolicy=\"no-referrer-when-downgrade\"></iframe>\n      </div>\n    </div>\n  `;\n}).join('');\n\nconst htmlContent = `\n<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n  <meta charset=\"UTF-8\" />\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n  <title>Restaurants chinois à Tananarive</title>\n  <link href=\"https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;500;600&display=swap\" rel=\"stylesheet\" />\n  <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css\" />\n  <style>\n    body {\n      font-family: 'Montserrat', sans-serif;\n      background: #fafafa;\n      margin: 0; padding: 20px;\n      color: #333;\n    }\n    h1 {\n      font-family: 'Playfair Display', serif;\n      text-align: center;\n      margin-bottom: 40px;\n    }\n    .restaurant {\n      background: white;\n      border-radius: 12px;\n      box-shadow: 0 4px 10px rgb(0 0 0 / 0.1);\n      margin-bottom: 40px;\n      padding: 20px;\n      animation: fadeInUp 0.5s ease forwards;\n      opacity: 0;\n    }\n    @keyframes fadeInUp {\n      to { opacity: 1; transform: translateY(0); }\n      from { opacity: 0; transform: translateY(20px); }\n    }\n    .image-container img {\n      max-width: 100%;\n      height: auto;\n      border-radius: 12px;\n      object-fit: contain;\n    }\n\n    .restaurant-header h2 {\n      margin: 15px 0 5px 0;\n      font-weight: 700;\n      font-size: 24px;\n      color: #2c3e50;\n    }\n    .specialite {\n      font-style: italic;\n      color: #666;\n      margin-bottom: 15px;\n    }\n    .restaurant-info p {\n      margin: 5px 0;\n      font-size: 14px;\n    }\n    .restaurant-actions {\n      margin: 15px 0;\n      display: flex;\n      gap: 15px;\n      flex-wrap: wrap;\n    }\n    .restaurant-actions a {\n      background-color: #1a73e8;\n      color: white;\n      padding: 8px 14px;\n      border-radius: 6px;\n      text-decoration: none;\n      font-weight: 600;\n      font-size: 14px;\n      display: flex;\n      align-items: center;\n      gap: 8px;\n      transition: background-color 0.3s ease;\n    }\n    .restaurant-actions a:hover {\n      background-color: #155ab6;\n    }\n    .map-container {\n      margin-top: 20px;\n      border-radius: 12px;\n      overflow: hidden;\n      box-shadow: 0 0 10px rgb(0 0 0 / 0.1);\n    }\n  </style>\n</head>\n<body>\n  <h1>Restaurants chinois à Tananarive</h1>\n  ${rows}\n</body>\n</html>\n`;\n\nreturn [{\n  json: { fileName: 'restaurants_tananarive.html' },\n  binary: {\n    data: {\n      data: Buffer.from(htmlContent).toString('base64'),\n      mimeType: 'text/html',\n      fileName: 'restaurants_chinois_tananarive.html'\n    }\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        340,
+        -80
+      ],
+      "id": "211877c3-d0e4-4872-97e2-1445487664b8",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "restos-chinois.html",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        560,
+        -80
+      ],
+      "id": "375b71b8-6df0-4b15-8425-db1bc9b12b22",
+      "name": "Read/Write Files from Disk"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "db1bfc9c-503a-4562-83bc-ae0d0a99e76a",
+  "meta": {
+    "instanceId": "73124c0676ac80bf3387669a880c04304b43973b9d8b94d9ade704f6c0229284"
+  },
+  "id": "0b3e9hT7zbODpjik",
+  "tags": []
+}
