@@ -1,2 +1,3 @@
 # exam1-2.0
-l'examen précédent refait
+nouvelle version de l'examen précédent
+
