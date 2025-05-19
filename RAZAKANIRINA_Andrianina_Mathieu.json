@@ -1,0 +1,689 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2160,
+        -100
+      ],
+      "id": "077b0248-5ee5-40ea-8531-926a67b21d3b",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "// On récupère la liste des restaurants\nconst restaurants = $input.all().flatMap(item => item.json.restaurants);\n\n// On construit le HTML en une seule chaîne\nconst html = `\n<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n  <meta charset=\"UTF-8\" />\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n  <title>Restaurants à Tana</title>\n  <style>\n    @keyframes glow {\n      0% { box-shadow: 0 0 5px #00ff88, 0 0 10px #00ff88; }\n      50% { box-shadow: 0 0 15px #00ff88, 0 0 25px #00ff88; }\n      100% { box-shadow: 0 0 5px #00ff88, 0 0 10px #00ff88; }\n    }\n    @keyframes fadeIn {\n      from { opacity: 0; transform: translateY(20px); }\n      to { opacity: 1; transform: translateY(0); }\n    }\n    @keyframes scan {\n      0% { transform: translateX(-100%); }\n      50% { transform: translateX(100%); }\n      100% { transform: translateX(100%); }\n    }\n    :root {\n      --primary-color: #00ff88;\n      --secondary-color: #ff00ff;\n      --text-color: #e0e0e0;\n      --card-bg-opacity: 0.1;\n      --card-hover-opacity: 0.2;\n      --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n    }\n    * {\n      box-sizing: border-box;\n      margin: 0;\n      padding: 0;\n    }\n    body {\n      font-family: 'Orbitron', 'Inter', sans-serif;\n      background-image: url('https://www.chine-sur-mesure.com/app/uploads/sites/6/2018/12/cite-interdite-chine-chrwittm.jpeg');\n      background-size: cover;\n      background-repeat: no-repeat;\n      background-position: center;\n      background-attachment: fixed;\n      color: var(--text-color);\n      line-height: 1.6;\n      min-height: 100vh;\n      display: flex;\n      flex-direction: column;\n      overflow-x: hidden;\n      position: relative;\n    }\n    body::before {\n      content: '';\n      position: absolute;\n      top: 0;\n      left: 0;\n      width: 100%;\n      height: 100%;\n      background: rgba(0, 0, 0, 0.5);\n      z-index: 0;\n    }\n    body > * {\n      position: relative;\n      z-index: 1;\n    }\n    h1 {\n      text-align: center;\n      padding: 1.5rem;\n      background: rgba(255, 255, 255, 0.05);\n      backdrop-filter: blur(10px);\n      font-size: clamp(2rem, 6vw, 2.5rem);\n      font-weight: 700;\n      text-transform: uppercase;\n      letter-spacing: 2px;\n      text-shadow: 0 0 10px var(--primary-color);\n      animation: fadeIn 1s ease-out;\n    }\n    .back-button {\n      display: none;\n      cursor: pointer;\n      font-size: 1rem;\n      margin: 1.5rem;\n      color: var(--text-color);\n      background: rgba(0, 255, 136, 0.2);\n      padding: 0.75rem 1.5rem;\n      border-radius: 8px;\n      border: 1px solid var(--primary-color);\n      transition: all 0.3s ease;\n      text-shadow: 0 0 5px var(--primary-color);\n      font-family: 'Orbitron', sans-serif;\n    }\n    .back-button:hover {\n      background: var(--primary-color);\n      color: #0f0f23;\n      transform: translateY(-2px);\n      box-shadow: 0 0 15px var(--primary-color);\n    }\n    .container {\n      flex: 1;\n      display: flex;\n      flex-direction: column;\n      gap: 2rem;\n      padding: 2rem;\n      max-width: 1400px;\n      margin: 0 auto;\n      width: 100%;\n    }\n    .grid {\n      display: grid;\n      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));\n      gap: 2rem;\n    }\n    .card {\n      background-size: cover;\n      background-repeat: no-repeat;\n      background-position: center;\n      border-radius: 15px;\n      border: 1px solid rgba(0, 255, 136, 0.3);\n      cursor: pointer;\n      overflow: hidden;\n      transition: all 0.3s ease;\n      height: 250px;\n      position: relative;\n      backdrop-filter: blur(8px);\n      animation: fadeIn 1s ease-out;\n    }\n    .card::before {\n      content: '';\n      position: absolute;\n      top: 0;\n      left: -100%;\n      width: 100%;\n      height: 100%;\n      background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.3), transparent);\n      animation: scan 5s infinite;\n    }\n    .card:hover {\n      transform: translateY(-8px) scale(1.02);\n      box-shadow: 0 0 20px var(--primary-color);\n      backdrop-filter: blur(10px);\n      background-size: cover;\n      background-repeat: no-repeat;\n      background-position: center;\n    }\n    .card h3 {\n      position: absolute;\n      bottom: 0;\n      left: 0;\n      right: 0;\n      margin: 0;\n      padding: 1rem;\n      background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);\n      color: var(--text-color);\n      text-align: center;\n      font-size: 1.6rem;\n      font-weight: 600;\n      text-shadow: 0 0 8px var(--primary-color);\n    }\n    .info-panel {\n      position: fixed;\n      top: 50%;\n      left: 50%;\n      transform: translate(-50%, -50%);\n      background: rgba(255, 255, 255, 0.1);\n      backdrop-filter: blur(12px);\n      border-radius: 15px;\n      border: 1px solid rgba(0, 255, 136, 0.3);\n      padding: 2.5rem;\n      display: none;\n      flex-direction: column;\n      align-items: center;\n      max-width: 1100px;\n      width: 90%;\n      box-shadow: 0 0 20px var(--primary-color);\n      z-index: 1000;\n      gap: 2.5rem;\n      animation: glow 2s infinite, fadeIn 0.8s ease-out;\n    }\n    .info-panel .back-button {\n      position: absolute;\n      top: 1rem;\n      left: 1rem;\n      display: block;\n    }\n    .info-panel img {\n      width: 100%;\n      max-width: 400px;\n      height: auto;\n      border-radius: 12px;\n      object-fit: cover;\n      border: 1px solid var(--primary-color);\n      box-shadow: 0 0 10px var(--primary-color);\n    }\n    .info-text {\n      flex: 1;\n      min-width: 0;\n      text-align: center;\n    }\n    .info-text h2 {\n      font-size: 2rem;\n      font-weight: 700;\n      margin-bottom: 1.5rem;\n      text-align: center;\n      color: var(--primary-color);\n      text-shadow: 0 0 10px var(--primary-color);\n    }\n    .info-text p {\n      margin-bottom: 1rem;\n      font-size: 1.1rem;\n      color: var(--text-color);\n    }\n    .info-text a {\n      color: var(--secondary-color);\n      font-weight: 600;\n      transition: all 0.3s ease;\n    }\n    .info-text a:hover {\n      color: var(--primary-color);\n      text-shadow: 0 0 5px var(--primary-color);\n      text-decoration: none;\n    }\n    .hidden {\n      display: none !important;\n    }\n    @media (max-width: 768px) {\n      .container {\n        padding: 1.5rem;\n      }\n      .grid {\n        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));\n      }\n      .info-panel {\n        flex-direction: column;\n        align-items: center;\n        max-height: 90vh;\n        overflow-y: auto;\n      }\n      .info-panel img {\n        max-width: 100%;\n      }\n      .info-text h2 {\n        text-align: center;\n        font-size: 1.8rem;\n      }\n    }\n    @media (max-width: 480px) {\n      .card {\n        height: 200px;\n      }\n      .card h3 {\n        font-size: 1.4rem;\n      }\n      .info-text h2 {\n        font-size: 1.6rem;\n      }\n      .info-text p {\n        font-size: 1rem;\n      }\n    }\n  </style>\n  <link href=\"https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap\" rel=\"stylesheet\">\n</head>\n<body>\n  <h1> Restaurants à Tana </h1>\n\n  <div class=\"container\">\n    <div class=\"grid\" id=\"restaurantGrid\"></div>\n    <div class=\"info-panel\" id=\"infoPanel\"></div>\n  </div>\n\n  <script>\n    const restaurants = ${JSON.stringify(restaurants, null, 2)};\n    const grid = document.getElementById('restaurantGrid');\n    const infoPanel = document.getElementById('infoPanel');\n\n    // Fonction pour générer les cartes\n    function generateCards(filteredRestaurants) {\n      grid.innerHTML = ''; // Vide la grille\n      filteredRestaurants.forEach((resto) => {\n        const card = document.createElement('div');\n        card.className = 'card';\n        card.style.backgroundImage = \\`url('\\${resto.image}')\\`; \n        card.onclick = () => showOnly(resto);\n        card.innerHTML = \\`<h3>\\${resto.name}</h3>\\`;\n        grid.appendChild(card);\n      });\n    }\n\n    // Afficher toutes les cartes au démarrage\n    generateCards(restaurants);\n\n    function showOnly(resto) {\n      document.querySelectorAll('.card').forEach(card => card.classList.add('hidden'));\n      infoPanel.style.display = 'flex';\n\n      infoPanel.innerHTML = \\`\n        <button class=\"back-button\" onclick=\"showAll()\">⬅ Retour</button>\n        <img src=\"\\${resto.image}\" alt=\"Image de \\${resto.name}\" />\n        <div class=\"info-text\">\n          <h2>\\${resto.name}</h2>\n          <p><strong>Adresse :</strong> \\${resto.address}</p>\n          <p><strong>Spécialité :</strong> \\${resto.specialite}</p>\n          <p>\\${resto.description}</p>\n          <p>\n            <strong>Localisation :</strong><br/>\n            <a href=\"https://www.google.com/maps?q=\\${resto.latitude},\\${resto.longitude}\" target=\"_blank\" aria-label=\"Voir \\${resto.name} sur Google Maps\"> Voir sur la carte</a><br/>\n            <a href=\"https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=\\${resto.latitude},\\${resto.longitude}\" target=\"_blank\" aria-label=\"Street View de \\${resto.name}\"> Street View</a><br/>\n          </p>\n        </div>\n      \\`;\n    }\n\n    function showAll() {\n      document.querySelectorAll('.card').forEach(card => card.classList.remove('hidden'));\n      infoPanel.style.display = 'none';\n      generateCards(restaurants); // Réaffiche toutes les cartes\n    }\n  </script>\n</body>\n</html>\n`;\n\n// Retourne une seule sortie avec le HTML\nreturn [{ json: { html } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        -100
+      ],
+      "id": "b318a50b-d20b-4bb4-9e34-7ef9457b7c0d",
+      "name": "Code to write the html file"
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "html",
+        "binaryPropertyName": "text/html ",
+        "options": {
+          "fileName": "restaurants_tana.html"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        120,
+        -100
+      ],
+      "id": "8975beb0-5632-4698-9e0b-3bba823c3871",
+      "name": "Convert to Html File"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      start: Array.from({ length: 5 }, (_, i) => i * 20)\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1900,
+        -100
+      ],
+      "id": "2aafc2b5-ab61-4b2a-8af3-138dbb0399c0",
+      "name": "Code for creating many URL"
+    },
+    {
+      "parameters": {
+        "url": "=https://serpapi.com/search.json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "engine",
+              "value": "google"
+            },
+            {
+              "name": "q",
+              "value": "restaurant chinois antananarivo"
+            },
+            {
+              "name": "location",
+              "value": "Antananarivo"
+            },
+            {
+              "name": "hl",
+              "value": "fr"
+            },
+            {
+              "name": "api_key",
+              "value": "ef83f4c7d8f749c86b17072355abc06d0d4d02ebbca3b8060935299c63680e3d"
+            },
+            {
+              "name": "gl",
+              "value": "mg"
+            },
+            {
+              "name": "google_domain",
+              "value": "google.com"
+            },
+            {
+              "name": "tbm",
+              "value": "lcl"
+            },
+            {
+              "name": "start",
+              "value": "={{ $json.start[4] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1360,
+        380
+      ],
+      "id": "0241838f-d3bb-4eb7-8287-2e1b676e6b78",
+      "name": "HTTP Request4"
+    },
+    {
+      "parameters": {
+        "url": "=https://serpapi.com/search.json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "engine",
+              "value": "google"
+            },
+            {
+              "name": "q",
+              "value": "restaurant chinois antananarivo"
+            },
+            {
+              "name": "location",
+              "value": "Antananarivo"
+            },
+            {
+              "name": "hl",
+              "value": "fr"
+            },
+            {
+              "name": "api_key",
+              "value": "ef83f4c7d8f749c86b17072355abc06d0d4d02ebbca3b8060935299c63680e3d"
+            },
+            {
+              "name": "gl",
+              "value": "mg"
+            },
+            {
+              "name": "google_domain",
+              "value": "google.com"
+            },
+            {
+              "name": "tbm",
+              "value": "lcl"
+            },
+            {
+              "name": "start",
+              "value": "={{ $json.start[3] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1360,
+        140
+      ],
+      "id": "c2e32705-01fa-4380-864f-74be0479deaf",
+      "name": "HTTP Request3"
+    },
+    {
+      "parameters": {
+        "url": "=https://serpapi.com/search.json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "engine",
+              "value": "google"
+            },
+            {
+              "name": "q",
+              "value": "restaurant chinois antananarivo"
+            },
+            {
+              "name": "location",
+              "value": "Antananarivo"
+            },
+            {
+              "name": "hl",
+              "value": "fr"
+            },
+            {
+              "name": "api_key",
+              "value": "ef83f4c7d8f749c86b17072355abc06d0d4d02ebbca3b8060935299c63680e3d"
+            },
+            {
+              "name": "gl",
+              "value": "mg"
+            },
+            {
+              "name": "google_domain",
+              "value": "google.com"
+            },
+            {
+              "name": "tbm",
+              "value": "lcl"
+            },
+            {
+              "name": "start",
+              "value": "={{ $json.start[2] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1360,
+        -100
+      ],
+      "id": "5e4a3a49-33f7-4c68-8c8d-0ba02e6d508e",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "url": "=https://serpapi.com/search.json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "engine",
+              "value": "google"
+            },
+            {
+              "name": "q",
+              "value": "restaurant chinois antananarivo"
+            },
+            {
+              "name": "location",
+              "value": "Antananarivo"
+            },
+            {
+              "name": "hl",
+              "value": "fr"
+            },
+            {
+              "name": "api_key",
+              "value": "ef83f4c7d8f749c86b17072355abc06d0d4d02ebbca3b8060935299c63680e3d"
+            },
+            {
+              "name": "gl",
+              "value": "mg"
+            },
+            {
+              "name": "google_domain",
+              "value": "google.com"
+            },
+            {
+              "name": "tbm",
+              "value": "lcl"
+            },
+            {
+              "name": "start",
+              "value": "={{ $json.start[1] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1360,
+        -360
+      ],
+      "id": "a779865b-dc27-4b20-aaa9-49a50ad24e75",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = [];\nfor (let i = 0; i < 5; i++){\n  for (const item of $input.first().json.restaurants) {\n    if (item.moyenne > 3 && item.nbrAvis > 20) {\n      output.push(item);\n    }\n  }\n}\nreturn [{\n  json: {\n    restaurants: output\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        -100
+      ],
+      "id": "5f8241f4-aa34-4f4d-b645-78f67fd1f5b4",
+      "name": "Code to filter a veritable chinese restaurent"
+    },
+    {
+      "parameters": {
+        "url": "=https://serpapi.com/search.json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "engine",
+              "value": "google"
+            },
+            {
+              "name": "q",
+              "value": "restaurant chinois antananarivo"
+            },
+            {
+              "name": "location",
+              "value": "Antananarivo"
+            },
+            {
+              "name": "hl",
+              "value": "fr"
+            },
+            {
+              "name": "api_key",
+              "value": "ef83f4c7d8f749c86b17072355abc06d0d4d02ebbca3b8060935299c63680e3d"
+            },
+            {
+              "name": "gl",
+              "value": "mg"
+            },
+            {
+              "name": "google_domain",
+              "value": "google.com"
+            },
+            {
+              "name": "tbm",
+              "value": "lcl"
+            },
+            {
+              "name": "start",
+              "value": "={{ $json.start[0] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1360,
+        -620
+      ],
+      "id": "45bafcd8-231d-4a45-becc-bfc492ee39d3",
+      "name": "HTTP Request0"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Créer un tableau pour stocker les résultats filtrés\nconst filteredResults = [];\n\nconst input = $input.first();\nconst places = input.json.local_results || [];\n\nfor (const item of places) {\n  const gps = item.gps_coordinates || {};\n\n  // Traiter l'URL de l'image pour s'assurer que c'est un .jpg et obtenir une meilleure qualité\n  let imageUrl = item.thumbnail || null;\n\n  if (imageUrl) {\n    // Remplacer .jpeg ou autres formats par .jpg\n    imageUrl = imageUrl.replace(/\\.(jpeg|png|webp)(\\?.*)?$/i, '.jpg');\n\n    // Si l’image est une image Unsplash ou similaire, enlever les paramètres de taille si existants\n    imageUrl = imageUrl.replace(/(\\?.*)$/, ''); // supprime les paramètres après ?\n  }\n\n  const filteredItem = {\n    name: item.title || null,\n    address: item.address || null,\n    latitude: gps.latitude || null,\n    longitude: gps.longitude || null,\n    description: item.description || null,\n    specialite: item.type || null,\n    position: item.position || null,\n    moyenne: item.rating || null,\n    nbrAvis: item.reviews || null,\n    \n    image: imageUrl\n    // Ajoute ici d'autres champs si besoin\n  };\n\n  filteredResults.push(filteredItem);\n}\n\n// Retourner tous les résultats dans un seul objet JSON\nreturn [{\n  json: {\n    restaurants: filteredResults\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1000,
+        -620
+      ],
+      "id": "a2e1b88d-562d-4964-a626-42be8067d73c",
+      "name": "Code_to_filter_the_Json_SerpApi0"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Créer un tableau pour stocker les résultats filtrés\nconst filteredResults = [];\n\nconst input = $input.first();\nconst places = input.json.local_results || [];\n\nfor (const item of places) {\n  const gps = item.gps_coordinates || {};\n\n  // Traiter l'URL de l'image pour s'assurer que c'est un .jpg et obtenir une meilleure qualité\n  let imageUrl = item.thumbnail || null;\n\n  if (imageUrl) {\n    // Remplacer .jpeg ou autres formats par .jpg\n    imageUrl = imageUrl.replace(/\\.(jpeg|png|webp)(\\?.*)?$/i, '.jpg');\n\n    // Si l’image est une image Unsplash ou similaire, enlever les paramètres de taille si existants\n    imageUrl = imageUrl.replace(/(\\?.*)$/, ''); // supprime les paramètres après ?\n  }\n\n  const filteredItem = {\n    name: item.title || null,\n    address: item.address || null,\n    latitude: gps.latitude || null,\n    longitude: gps.longitude || null,\n    description: item.description || null,\n    specialite: item.type || null,\n    image: imageUrl\n    // Ajoute ici d'autres champs si besoin\n  };\n\n  filteredResults.push(filteredItem);\n}\n\n// Retourner tous les résultats dans un seul objet JSON\nreturn [{\n  json: {\n    restaurants: filteredResults\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1000,
+        -360
+      ],
+      "id": "92fd5af1-1a8a-4e05-b521-590dbd704ee3",
+      "name": "Code_to_filter_the_Json_SerpApi1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Créer un tableau pour stocker les résultats filtrés\nconst filteredResults = [];\n\nconst input = $input.first();\nconst places = input.json.local_results || [];\n\nfor (const item of places) {\n  const gps = item.gps_coordinates || {};\n\n  // Traiter l'URL de l'image pour s'assurer que c'est un .jpg et obtenir une meilleure qualité\n  let imageUrl = item.thumbnail || null;\n\n  if (imageUrl) {\n    // Remplacer .jpeg ou autres formats par .jpg\n    imageUrl = imageUrl.replace(/\\.(jpeg|png|webp)(\\?.*)?$/i, '.jpg');\n\n    // Si l’image est une image Unsplash ou similaire, enlever les paramètres de taille si existants\n    imageUrl = imageUrl.replace(/(\\?.*)$/, ''); // supprime les paramètres après ?\n  }\n\n  const filteredItem = {\n    name: item.title || null,\n    address: item.address || null,\n    latitude: gps.latitude || null,\n    longitude: gps.longitude || null,\n    description: item.description || null,\n    specialite: item.type || null,\n    image: imageUrl\n    // Ajoute ici d'autres champs si besoin\n  };\n\n  filteredResults.push(filteredItem);\n}\n\n// Retourner tous les résultats dans un seul objet JSON\nreturn [{\n  json: {\n    restaurants: filteredResults\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1000,
+        -100
+      ],
+      "id": "1cea6f5f-7940-47c3-8b79-c6d5e2e43b08",
+      "name": "Code_to_filter_the_Json_SerpApi2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Créer un tableau pour stocker les résultats filtrés\nconst filteredResults = [];\n\nconst input = $input.first();\nconst places = input.json.local_results || [];\n\nfor (const item of places) {\n  const gps = item.gps_coordinates || {};\n\n  // Traiter l'URL de l'image pour s'assurer que c'est un .jpg et obtenir une meilleure qualité\n  let imageUrl = item.thumbnail || null;\n\n  if (imageUrl) {\n    // Remplacer .jpeg ou autres formats par .jpg\n    imageUrl = imageUrl.replace(/\\.(jpeg|png|webp)(\\?.*)?$/i, '.jpg');\n\n    // Si l’image est une image Unsplash ou similaire, enlever les paramètres de taille si existants\n    imageUrl = imageUrl.replace(/(\\?.*)$/, ''); // supprime les paramètres après ?\n  }\n\n  const filteredItem = {\n    name: item.title || null,\n    address: item.address || null,\n    latitude: gps.latitude || null,\n    longitude: gps.longitude || null,\n    description: item.description || null,\n    specialite: item.type || null,\n    image: imageUrl\n    // Ajoute ici d'autres champs si besoin\n  };\n\n  filteredResults.push(filteredItem);\n}\n\n// Retourner tous les résultats dans un seul objet JSON\nreturn [{\n  json: {\n    restaurants: filteredResults\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1000,
+        140
+      ],
+      "id": "57f7cdac-ceb1-49ea-9b1f-ad6fdc793eae",
+      "name": "Code_to_filter_the_Json_SerpApi3"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Créer un tableau pour stocker les résultats filtrés\nconst filteredResults = [];\n\nconst input = $input.first();\nconst places = input.json.local_results || [];\n\nfor (const item of places) {\n  const gps = item.gps_coordinates || {};\n\n  // Traiter l'URL de l'image pour s'assurer que c'est un .jpg et obtenir une meilleure qualité\n  let imageUrl = item.thumbnail || null;\n\n  if (imageUrl) {\n    // Remplacer .jpeg ou autres formats par .jpg\n    imageUrl = imageUrl.replace(/\\.(jpeg|png|webp)(\\?.*)?$/i, '.jpg');\n\n    // Si l’image est une image Unsplash ou similaire, enlever les paramètres de taille si existants\n    imageUrl = imageUrl.replace(/(\\?.*)$/, ''); // supprime les paramètres après ?\n  }\n\n  const filteredItem = {\n    name: item.title || null,\n    address: item.address || null,\n    latitude: gps.latitude || null,\n    longitude: gps.longitude || null,\n    description: item.description || null,\n    specialite: item.type || null,\n    image: imageUrl\n    // Ajoute ici d'autres champs si besoin\n  };\n\n  filteredResults.push(filteredItem);\n}\n\n// Retourner tous les résultats dans un seul objet JSON\nreturn [{\n  json: {\n    restaurants: filteredResults\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1000,
+        380
+      ],
+      "id": "7feb973e-f5f8-44ff-9b73-dd4ed6239e73",
+      "name": "Code_to_filter_the_Json_SerpApi4"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        -720,
+        -100
+      ],
+      "id": "fd86d385-3585-4889-a102-d48e4d8132a8",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        -740,
+        120
+      ],
+      "id": "c51b60d5-02a9-4b37-ae8b-d4650d08ec25",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        -500,
+        360
+      ],
+      "id": "137a09fc-d1ce-4c36-8a64-cd0eaaef5880",
+      "name": "Merge3"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        -740,
+        -480
+      ],
+      "id": "7d7206cb-e6e7-4770-9252-8fced83e10bd",
+      "name": "Merge0"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Code for creating many URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code to write the html file": {
+      "main": [
+        [
+          {
+            "node": "Convert to Html File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code for creating many URL": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request0",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request4",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request4": {
+      "main": [
+        [
+          {
+            "node": "Code_to_filter_the_Json_SerpApi4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Code_to_filter_the_Json_SerpApi3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Code_to_filter_the_Json_SerpApi2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code_to_filter_the_Json_SerpApi1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code to filter a veritable chinese restaurent": {
+      "main": [
+        [
+          {
+            "node": "Code to write the html file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request0": {
+      "main": [
+        [
+          {
+            "node": "Code_to_filter_the_Json_SerpApi0",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code_to_filter_the_Json_SerpApi0": {
+      "main": [
+        [
+          {
+            "node": "Merge0",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code_to_filter_the_Json_SerpApi1": {
+      "main": [
+        [
+          {
+            "node": "Merge0",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Code_to_filter_the_Json_SerpApi2": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Code_to_filter_the_Json_SerpApi3": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Code_to_filter_the_Json_SerpApi4": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge0": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge3": {
+      "main": [
+        [
+          {
+            "node": "Code to filter a veritable chinese restaurent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6ced85dc-bc1c-43cc-8f36-463181d01dde",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f44e18df885ab14a70e289c3637e96cebbb0913c0582f05f9456880676c5bd9c"
+  },
+  "id": "tkodDh7aW4ByagG4",
+  "tags": []
+}
