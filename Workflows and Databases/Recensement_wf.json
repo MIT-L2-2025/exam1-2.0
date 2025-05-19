@@ -1,0 +1,277 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        100
+      ],
+      "id": "f2acd38d-25e2-4fc0-8a30-54784b83d7b3",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "restaurants.html",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1180,
+        140
+      ],
+      "id": "c27743c7-793f-40fa-a14e-eb3b781fdf6c",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "fileSelector": "restaurant.json",
+        "options": {
+          "dataPropertyName": "json"
+        }
+      },
+      "name": "lil test",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        140,
+        0
+      ],
+      "id": "6407560e-8d37-4d31-ad24-6f106608cd82"
+    },
+    {
+      "parameters": {
+        "operation": "fromJson",
+        "binaryPropertyName": "json",
+        "destinationKey": "restaurants",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        300,
+        100
+      ],
+      "id": "5e903e1e-eec5-4784-b23c-b9af31a7f64a",
+      "name": "file extract"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Tableaux de mots-clés\nconst positiveKeywords = [\n  'chinois',\n  'qing',\n  'dragon',\n  'panda',\n  'shi fu',\n  'tsang',\n  'rouge',\n  'hao',\n  'jade',\n  'lotus',\n  'dynasty',\n  'empire',\n  'chinese',\n  'huo',\n  'hong kong',\n  'canton',\n  'cantonaise',\n  'hua',\n  'fleur',\n  'orient',\n  'oriental',\n  'zen',\n  'jasmin',\n];\nconst negativeKeywords = [\n  'malagasy',\n  'gargotte', \n  'italy',\n  'indian',\n  'indien'\n];\n\nreturn items.map(item => {\n  const restaurants = item.json.restaurants || [];\n  return {\n    json: {\n      restaurants: restaurants.map(restaurant => {\n        const name = (restaurant.name || '').toLowerCase();\n        let score = 0;\n        let unscore = 0;\n\n        // Caractères chinois\n        if (/[\\u4e00-\\u9fff]/.test(name) || name.includes('chine') || name.includes('china')) {\n          score += 0.7;\n        }\n\n        // Vérification des mots-clés positifs\n        for (let keyword of positiveKeywords) {\n          if (name.includes(keyword)) {\n            score += 0.3;\n            break; // Sortir après le premier match pour éviter d'ajouter plusieurs fois\n          }\n        }\n\n        // Vérification des mots-clés négatifs\n        for (let keyword of negativeKeywords) {\n          if (name.includes(keyword)) {\n            unscore += 0.2;\n            break; // Sortir après le premier match pour éviter de pénaliser plusieurs fois\n          }\n        }\n\n        // Normaliser le score entre 0 et 1\n        score = Math.max(0, Math.min(1, score));\n\n        return {\n          ...restaurant,\n          name_chineseness_score: score,\n          name_chineseness_unscore: unscore\n        };\n      })\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        140,
+        340
+      ],
+      "id": "7b37f949-c7ec-4c99-af88-fbd093a2f41f",
+      "name": "name_pondie"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Fonction pour calculer la distance haversine (en km)\nfunction haversineDistance(lat1, lon1, lat2, lon2) {\n  const R = 6371; // Rayon de la Terre en km\n  const dLat = (lat2 - lat1) * Math.PI / 180;\n  const dLon = (lon2 - lon1) * Math.PI / 180;\n  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +\n            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *\n            Math.sin(dLon / 2) * Math.sin(dLon / 2);\n  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));\n  return R * c;\n}\n\n// Coordonnées approximatives des quartiers\nconst neighborhoods = [\n  { name: 'Behoririka', lat: -18.9000, lon: 47.5200, score: 0.6 },\n  { name: 'Analakely', lat: -18.9100, lon: 47.5250, score: 0.5 },\n  { name: 'Andrahavoangy', lat: -18.8900, lon: 47.5100, score: 0.3 },\n  { name: 'Ankorondrano', lat: -18.8700, lon: 47.5300, score: 0.5 },\n  { name: 'Ivato', lat: -18.8000, lon: 47.4800, score: 0.6 }\n];\n\n// Rayon de proximité en km\nconst proximityRadius = 2;\n\nreturn items.map(item => {\n  const restaurants = item.json.restaurants || [];\n  return {\n    json: {\n      restaurants: restaurants.map(restaurant => {\n        const lat = restaurant.latitude || 0;\n        const lon = restaurant.longitude || 0;\n        let score = 0.1; // Score par défaut\n\n        // Tester chaque quartier dans l'ordre\n        for (let neighborhood of neighborhoods) {\n          const distance = haversineDistance(lat, lon, neighborhood.lat, neighborhood.lon);\n          let no = neighborhood.name.toLowerCase();\n          let vic = restaurant.vicinity.toLowerCase();\n          if (distance <= proximityRadius || vic.includes(no)) {\n            score = neighborhood.score;\n            break; // Arrêter dès qu'un quartier proche est trouvé\n          }\n        }\n\n        return {\n          ...restaurant,\n          location_chineseness_score: score\n        };\n      })\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        140
+      ],
+      "id": "8cb8d64b-215b-44ca-9f41-aa4af18698ad",
+      "name": "getLocation"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const restaurants = item.json.restaurants || [];\n  return {\n    json: {\n      restaurants: restaurants.map(restaurant => {\n        const ratingsStr = restaurant.all_rating || '';\n        const ratings = ratingsStr.split('.').map(r => parseFloat(r.trim())).filter(r => !isNaN(r));\n        const avgRating = ratings.length ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length : 0;\n\n        // Score basé sur la note moyenne (hypothèse : bons restaurants = plus authentiques)\n        let score = avgRating / 5; // Normalisé entre 0 et 1\n\n        return {\n          ...restaurant,\n          rating_chineseness_score: score\n        };\n      })\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        480
+      ],
+      "id": "066a20c0-2410-41f3-b67a-1ba32d2e80e8",
+      "name": "Rating*"
+    },
+    {
+      "parameters": {
+        "jsCode": "const vraimentChinoisKeywords = [\n  'yum cha', 'dim sum', 'canard laqué', 'mapo tofu', 'xiaolongbao', 'authentique chinois','cuisine sichuanaise', 'cuisine cantonaise', 'wonton', 'raviolis chinois', '飲茶', 'authentique', 'authentic', 'tofu', 'noodle','noodles', 'chinois', 'chinese', 'cantonais', 'the', 'pao', 'tea', 'nouilles', 'cantonese', 'cantonese rice',\n];\nconst moyennementChinoisKeywords = [\n  'poulet général tao', 'chop suey', 'riz frit', 'nouilles chow mein', 'fusion asiatique', 'soup', 'chicken', 'poulet', 'asian', 'asiatique','fusion', 'mine-sao',\n  'sino-américain', 'egg roll'\n];\nconst pasChinoisKeywords = [\n  'pizza', 'burger', 'sushi', 'thaï', 'italien', 'français', 'mexicain', 'pas chinois', 'malagasy','Korea', 'Korean', 'american', 'americaine'\n];\n\nreturn items.map(item => {\n  const restaurants = item.json.restaurants || [];\n  return {\n    json: {\n      restaurants: restaurants.map(restaurant => {\n        const commentairesStr = restaurant.all_text || '';\n        const commentaires = commentairesStr.split(/[\\n.]+/).filter(c => c.trim());\n        let scoreVraiment = 0;\n        let scoreMoyennement = 0;\n        let scorePas = 0;\n\n        for (let commentaire of commentaires) {\n          const commentaireLower = commentaire.toLowerCase().trim();\n          for (let keyword of vraimentChinoisKeywords) {\n            if (commentaireLower.includes(keyword)) scoreVraiment += 0.3;\n          }\n          for (let keyword of moyennementChinoisKeywords) {\n            if (commentaireLower.includes(keyword)) scoreMoyennement += 0.2;\n          }\n          for (let keyword of pasChinoisKeywords) {\n            if (commentaireLower.includes(keyword)) scorePas += 0.2;\n          }\n        }\n\n        // Score final : privilégier \"vraiment chinois\", puis \"moyennement\", pénaliser \"pas chinois\"\n        let score = scoreVraiment + 0.5 * scoreMoyennement - scorePas;\n        score = Math.max(0, Math.min(1, score));\n\n        return {\n          ...restaurant,\n          text_chineseness_score: score\n        };\n      })\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        340,
+        320
+      ],
+      "id": "6e858707-8704-4bd7-bdc1-90bc062f9af4",
+      "name": "DescType"
+    },
+    {
+      "parameters": {
+        "jsCode": "const chineseNames = ['li', 'wang', 'zhang', 'chen', 'yang', 'zhao', 'ying', 'xu', 'sun'];\n\nreturn items.map(item => {\n  const restaurants = item.json.restaurants || [];\n  return {\n    json: {\n      restaurants: restaurants.map(restaurant => {\n        const authorsStr = restaurant.all_authors || '';\n        const authors = authorsStr.split(',').map(a => a.trim().toLowerCase());\n        let score = 0;\n\n        for (let author of authors) {\n          if (chineseNames.some(name => author.includes(name))) {\n            score += 0.3; // Bonus pour chaque nom potentiellement chinois\n          }else if(/[\\u4e00-\\u9fff]/.test(author)){\n            score += 0.7;\n          }\n        }\n\n        score = Math.max(0, Math.min(1, score));\n\n        return {\n          ...restaurant,\n          authors_chineseness_score: score\n        };\n      })\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        120
+      ],
+      "id": "9572dce6-eb9e-4dbe-aca0-02319343dcfc",
+      "name": "Author"
+    },
+    {
+      "parameters": {
+        "jsCode": "const weights = {\n  name: 0.4,\n  text: 0.4,\n  authors: 0.3,\n  location: 0.2,\n  rating: 0.05\n};\n\n// Expected score distributions for each class\nconst expectedScores = {\n  'Vraiment chinois': {\n    name: 0.8,\n    location: 0.6,\n    text: 0.7,\n    authors: 0.7,\n    rating: 0.7\n  },\n  'Moyennement chinois': {\n    name: 0.5,\n    location: 0.4,\n    text: 0.5,\n    authors: 0.5,\n    rating: 0.5\n  },\n  'Pas chinois': {\n    name: 0.2,\n    location: 0.2,\n    text: 0.2,\n    authors: 0.2,\n    rating: 0.4\n  }\n};\n\n// Function to calculate Chi-squared statistic\nfunction calculateChiSquared(observed, expected) {\n  let chiSquared = 0;\n  const parameters = ['name', 'location', 'text', 'authors', 'rating'];\n  for (let param of parameters) {\n    const obs = observed[param] || 0;\n    const exp = expected[param] || 0.01; // Avoid division by zero\n    chiSquared += ((obs - exp) ** 2) / exp;\n  }\n  return chiSquared;\n}\n\nreturn items.map(item => {\n  const restaurants = item.json.restaurants || [];\n  return {\n    json: {\n      restaurants: restaurants.map(restaurant => {\n        // Retrieve scores (0 if absent)\n        const nameScore = restaurant.name_chineseness_score || 0;\n        const textScore = restaurant.text_chineseness_score || 0;\n        const authorsScore = restaurant.authors_chineseness_score || 0;\n        const locationScore = restaurant.location_chineseness_score || 0;\n        const ratingScore = restaurant.rating_chineseness_score || 0;\n\n        // Check discriminative rule\n        const isTextUnavailable = !restaurant.all_text || restaurant.all_text.trim() === '' || textScore === 0;\n        const isAuthorsUnavailable = !restaurant.all_authors || restaurant.all_authors.trim() === '' || authorsScore === 0;\n        const isHighNameScore = nameScore >= 0.7;\n        const isHighLocationScore = locationScore >= 0.7;\n\n        let classification;\n        let globalScore;\n\n        if (isHighNameScore && isHighLocationScore && isTextUnavailable && isAuthorsUnavailable) {\n          // Discriminative rule: force \"Vraiment chinois\"\n          classification = 'Vraiment chinois';\n          globalScore = 1.0;\n        } else {\n          // Calculate Chi-squared for each class\n          const observed = {\n            name: nameScore,\n            location: locationScore,\n            text: textScore,\n            authors: authorsScore,\n            rating: ratingScore\n          };\n          const chiSquaredResults = {};\n          for (let className in expectedScores) {\n            chiSquaredResults[className] = calculateChiSquared(observed, expectedScores[className]);\n          }\n\n          // Choose class with lowest Chi-squared\n          const bestClass = Object.keys(chiSquaredResults).reduce((a, b) =>\n            chiSquaredResults[a] < chiSquaredResults[b] ? a : b\n          );\n          classification = bestClass;\n\n          // Calculate weighted score for consistency (optional)\n          globalScore = (\n            nameScore * weights.name +\n            textScore * weights.text +\n            authorsScore * weights.authors +\n            locationScore * weights.location +\n            ratingScore * weights.rating\n          );\n          if(globalScore < 0.3 && classification == 'Moyennement chinois'){\n            classification = 'Pas chinois';\n          }\n        }\n\n        return {\n          ...restaurant,\n          global_chineseness_score: globalScore,\n          classification: classification\n        };\n      })\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        420
+      ],
+      "id": "cad15cc0-0d53-4753-80e8-a9f35617d9e5",
+      "name": "putting in order"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Générer le contenu du tableau HTML avec un nouveau design sombre et élégant et toutes les spécifications détaillées\nconst restaurants = items[0].json.restaurants || [];\nconst tableRows = restaurants.map((r, i) => `\n  <tr class=\"border-b border-gray-700 hover:bg-gray-800 cursor-pointer transition duration-200\" onclick=\"openModal(${i})\">\n    <td class=\"py-2 px-4 font-semibold text-cyan-300\">${r.name || 'N/A'}</td>\n    <td class=\"py-2 px-4\">${r.classification || 'Indéterminé'}</td>\n    <td class=\"py-2 px-4\">${((r.global_chineseness_score || 0) * 100).toFixed(2)}%</td>\n    <td class=\"py-2 px-4\">${(r.name_chineseness_score || 0).toFixed(2)}</td>\n    <td class=\"py-2 px-4\">${(r.location_chineseness_score || 0).toFixed(2)}</td>\n    <td class=\"py-2 px-4\">${(r.text_chineseness_score || 0).toFixed(2)}</td>\n    <td class=\"py-2 px-4\">${(r.authors_chineseness_score || 0).toFixed(2)}</td>\n    <td class=\"py-2 px-4\">${(r.rating_chineseness_score || 0).toFixed(2)}</td>\n  </tr>\n`).join('');\n\nconst classificationCounts = restaurants.reduce((acc, r) => {\n  const key = r.classification || 'Indéterminé';\n  acc[key] = (acc[key] || 0) + 1;\n  return acc;\n}, { 'Vraiment chinois': 0, 'Moyennement chinois': 0, 'Pas chinois': 0, 'Indéterminé': 0 });\n\nconst restaurantsJson = JSON.stringify(\n  restaurants.map(r => ({\n    name: r.name || 'N/A',\n    classification: r.classification || 'Indéterminé',\n    latitude: r.latitude || 0,\n    longitude: r.longitude || 0,\n    vicinity: r.vicinity || '',\n    nameScore: r.name_chineseness_score || 0,\n    locationScore: r.location_chineseness_score || 0,\n    textScore: r.text_chineseness_score || 0,\n    authorsScore: r.authors_chineseness_score || 0,\n    ratingScore: r.rating_chineseness_score || 0,\n    globalScore: r.global_chineseness_score || 0\n  }))\n);\n\nconst htmlContent = `\n<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n  <meta charset=\"UTF-8\" />\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n  <title>Restaurants Chinois</title>\n  <script src=\"https://cdn.tailwindcss.com\"></script>\n  <script src=\"https://cdn.jsdelivr.net/npm/chart.js\"></script>\n  <script src=\"https://maps.googleapis.com/maps/api/js?key=AIzaSyD26SBDx0y_zVHM30FGrC0BiQm6RrJwpmM&libraries=places\"></script>\n</head>\n<body class=\"bg-gray-900 text-gray-100 font-sans\">\n  <div class=\"min-h-screen flex flex-col p-6\">\n    <header class=\"text-center mb-10\">\n      <h1 class=\"text-5xl font-extrabold text-cyan-400 mb-2\">🍜 Restaurants Chinois</h1>\n      <p class=\"text-gray-400\">Explorez les restaurants classés par authenticité</p>\n    </header>\n\n    <main class=\"flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8\">\n      <section class=\"bg-gray-800 p-6 rounded-xl shadow-xl\">\n        <h2 class=\"text-2xl font-bold mb-4 text-cyan-300\">Liste Complète</h2>\n        <div class=\"overflow-x-auto\">\n          <table class=\"w-full text-sm table-auto\">\n            <thead>\n              <tr class=\"text-left border-b border-cyan-600\">\n                <th class=\"py-2 px-4\">Nom</th>\n                <th class=\"py-2 px-4\">Classification</th>\n                <th class=\"py-2 px-4\">Score Global</th>\n                <th class=\"py-2 px-4\">Nom</th>\n                <th class=\"py-2 px-4\">Emplacement</th>\n                <th class=\"py-2 px-4\">Commentaires</th>\n                <th class=\"py-2 px-4\">Auteurs</th>\n                <th class=\"py-2 px-4\">Notes</th>\n              </tr>\n            </thead>\n            <tbody>${tableRows}</tbody>\n          </table>\n        </div>\n      </section>\n\n      <section class=\"bg-gray-800 p-6 rounded-xl shadow-xl\">\n        <h2 class=\"text-2xl font-bold mb-4 text-cyan-300\">Statistiques</h2>\n        <canvas id=\"classificationChart\" height=\"300\"></canvas>\n      </section>\n    </main>\n  </div>\n\n  <script>\n    new Chart(document.getElementById('classificationChart').getContext('2d'), {\n      type: 'bar',\n      data: {\n        labels: ['Vraiment chinois', 'Moyennement chinois', 'Pas chinois', 'Indéterminé'],\n        datasets: [{\n          label: 'Restaurants',\n          data: [${classificationCounts['Vraiment chinois']}, ${classificationCounts['Moyennement chinois']}, ${classificationCounts['Pas chinois']}, ${classificationCounts['Indéterminé']}],\n          backgroundColor: ['#06b6d4', '#3b82f6', '#ef4444', '#6b7280'],\n          borderWidth: 1\n        }]\n      },\n      options: {\n        responsive: true,\n        scales: {\n          y: { beginAtZero: true, ticks: { color: 'white' }, title: { display: true, text: 'Nombre de restaurants', color: 'white' } },\n          x: { ticks: { color: 'white' }, title: { display: true, text: 'Classification', color: 'white' } }\n        },\n        plugins: { legend: { labels: { color: 'white' } } }\n      }\n    });\n  </script>\n</body>\n</html>\n`;\n\n// Convertir le HTML en Buffer\nconst htmlBuffer = Buffer.from(htmlContent, 'utf-8');\n\n// Retourner les données binaires\nreturn [{\n  binary: {\n    data: {\n      data: htmlBuffer.toString('base64'),\n      mimeType: 'text/html',\n      fileName: 'restaurants-db.html'\n    }\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        980,
+        360
+      ],
+      "id": "6131e0d4-18b3-45df-8746-4342e5096443",
+      "name": "html conversion"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "lil test",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "lil test": {
+      "main": [
+        [
+          {
+            "node": "file extract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "file extract": {
+      "main": [
+        [
+          {
+            "node": "name_pondie",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "name_pondie": {
+      "main": [
+        [
+          {
+            "node": "getLocation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getLocation": {
+      "main": [
+        [
+          {
+            "node": "Rating*",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rating*": {
+      "main": [
+        [
+          {
+            "node": "DescType",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DescType": {
+      "main": [
+        [
+          {
+            "node": "Author",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Author": {
+      "main": [
+        [
+          {
+            "node": "putting in order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "putting in order": {
+      "main": [
+        [
+          {
+            "node": "html conversion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "html conversion": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "381e63a8-e4f4-454a-99b5-b8de695d48f7",
+  "meta": {
+    "instanceId": "8e64c042c4170cdbeee1c99283b41c0c131eb8bcceb620d19f4021955291963c"
+  },
+  "id": "QTVCFdwhPfjHHOux",
+  "tags": []
+}
