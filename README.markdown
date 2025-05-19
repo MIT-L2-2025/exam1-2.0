@@ -1,4 +1,4 @@
-# ChiTana - README du Workflow n8n
+# ChiTana - Chercheur de tous les restaurant chinois d'Antananarivo
 
 ## 📋 Aperçu
 
