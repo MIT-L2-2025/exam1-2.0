@@ -64,14 +64,6 @@ Pour que le workflow fonctionne correctement, tu dois fournir :
 - 💬 Interface utilisateur pour choisir les types de cuisine
 - 🔄 Cron trigger pour exécuter automatiquement
 
----
-
-## 🧑‍💻 Auteur
-
-**Nom du développeur :** *(à compléter)*  
-**Contact :** *(email ou GitHub, optionnel)*
-
----
 
 ## 📝 Licence
 
