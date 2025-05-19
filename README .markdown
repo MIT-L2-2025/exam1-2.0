@@ -1,7 +1,7 @@
-# README - Analyse des Restaurants Chinois à Antananarivo
+- Analyse des Restaurants Chinois à Antananarivo
 
 
-Utilisation d'un flux de travail n8n pour analyser et lister les restaurants chinois à Antananarivo. Il collecte des données sur 41 restaurants, calcule la probabilité qu'ils soient chinois, effectue un test statistique Khi-deux, et génère un rapport HTML interactif.
+Utilisation d'un flux de travail n8n pour analyser et lister les restaurants chinois à Antananarivo.Collection des données sur 41 restaurants, calcule la probabilité qu'ils soient chinois, et effectue un test statistique Khi-deux, mais aussi:génère un rapport HTML interactif.
 
 ## Fonctionnalités
 - **Données** : Liste de 41 restaurants avec nom, adresse, type de cuisine, menu, téléphone, et URL d'image.
