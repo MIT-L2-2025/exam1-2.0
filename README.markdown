@@ -161,14 +161,11 @@ Horaires : Lun-Dim 11:00-22:00
 
 ---
 
-## ⚠️ Limites
-- Précision des données.
-- Adresse non utilisée.
 - Délais de pagination.
 
 ---
 
-## 🔮 Améliorations
-- Analyse automatique de la pertinence des variables.
-- Intégrer l’adresse dans le score.
-- Optimiser la pagination.
+## Exemple
+![Screenshot_20250519_152726](https://github.com/user-attachments/assets/1464e4be-34e9-463b-a63e-ac167e8296e9)
+![Screenshot_20250519_152629](https://github.com/user-attachments/assets/159783c2-38e2-4555-b92b-e517c9a8496b)
+
