@@ -1,0 +1,676 @@
+{
+  "name": "resto_chinois",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1700,
+        540
+      ],
+      "id": "458aa2a6-0ded-4493-afb5-e2093379b27d",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://maps.googleapis.com/maps/api/place/textsearch/json?query=restaurant+chinois+Antananarivo&key=AIzaSyD26SBDx0y_zVHM30FGrC0BiQm6RrJwpmM",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1300,
+        300
+      ],
+      "id": "81de608e-2031-4d51-af60-c01a7dd6bbda",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extraire le next_page_token depuis la réponse\nreturn items.map(item => {\n  return {\n    json: {\n      next_page_token: item.json.next_page_token || null,  // Extraire le token\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1120,
+        160
+      ],
+      "id": "682b1432-7dba-4d02-acdb-d59244f0ec1d",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extraire toutes les informations pour tous les restaurants dans le tableau 'results'\nreturn items[0].json.results.map(result => {\n  return {\n    json: {\n      name: result.name || null, // Nom du restaurant\n      place_id: result.place_id || null, // ID unique du lieu\n      icon: result.icon || null, // Icône (si disponible)\n      rating: result.rating || null, // Note (si disponible)\n      user_ratings_total: result.user_ratings_total || 0, // Nombre total d'avis\n      photo_reference: result.photos ? result.photos[0].photo_reference : null, // Photo (si disponible)\n      attribution: result.photos && result.photos[0].html_attributions ? result.photos[0].html_attributions[0] : null, // Attribution photo (si disponible)\n      address: result.formatted_address || null, // Adresse complète (si disponible)\n      plus_code: result.plus_code ? result.plus_code.compound_code : null, // Code Plus (si disponible)\n      types: result.types || [], // Types associés au restaurant\n      latitude: result.geometry?.location?.lat || null, // Latitude (si disponible)\n      longitude: result.geometry?.location?.lng || null, // Longitude (si disponible)\n      business_status: result.business_status || null, // Statut de l'entreprise (OPERATIONAL, etc.)\n      open_now: result.opening_hours?.open_now ?? null // Si le restaurant est ouvert maintenant (si disponible)\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1100,
+        540
+      ],
+      "id": "e0119a02-4ad1-43c1-8378-5f90b1704b8e",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "url": "https://maps.googleapis.com/maps/api/place/textsearch/json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "pagetoken",
+              "value": "={{ $json.next_page_token }}"
+            },
+            {
+              "name": "key",
+              "value": "AIzaSyD26SBDx0y_zVHM30FGrC0BiQm6RrJwpmM"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -560,
+        140
+      ],
+      "id": "3383fda8-58d6-44fc-bd57-23f29e7b97a6",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extraire toutes les informations pour tous les restaurants dans le tableau 'results'\nreturn items[0].json.results.map(result => {\n  return {\n    json: {\n      name: result.name || null, // Nom du restaurant\n      place_id: result.place_id || null, // ID unique du lieu\n      icon: result.icon || null, // Icône (si disponible)\n      rating: result.rating || null, // Note (si disponible)\n      user_ratings_total: result.user_ratings_total || 0, // Nombre total d'avis\n      photo_reference: result.photos ? result.photos[0].photo_reference : null, // Photo (si disponible)\n      attribution: result.photos && result.photos[0].html_attributions ? result.photos[0].html_attributions[0] : null, // Attribution photo (si disponible)\n      address: result.formatted_address || null, // Adresse complète (si disponible)\n      plus_code: result.plus_code ? result.plus_code.compound_code : null, // Code Plus (si disponible)\n      types: result.types || [], // Types associés au restaurant\n      latitude: result.geometry?.location?.lat || null, // Latitude (si disponible)\n      longitude: result.geometry?.location?.lng || null, // Longitude (si disponible)\n      business_status: result.business_status || null, // Statut de l'entreprise (OPERATIONAL, etc.)\n      open_now: result.opening_hours?.open_now ?? null // Si le restaurant est ouvert maintenant (si disponible)\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -880,
+        400
+      ],
+      "id": "821a7ad6-b234-409f-8607-ba1c00213d68",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extraire le next_page_token depuis la réponse\nreturn items.map(item => {\n  return {\n    json: {\n      next_page_token: item.json.next_page_token || null,  // Extraire le token\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        160
+      ],
+      "id": "5ea5ae46-58f6-45f6-8fcd-2c2d368bcca5",
+      "name": "Code3"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        -620,
+        560
+      ],
+      "id": "c1bc171e-b710-46ef-a590-4d350cd31fe4",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "url": "https://maps.googleapis.com/maps/api/place/textsearch/json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "pagetoken",
+              "value": "={{ $json.next_page_token }}"
+            },
+            {
+              "name": "key",
+              "value": "AIzaSyD26SBDx0y_zVHM30FGrC0BiQm6RrJwpmM"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        140,
+        300
+      ],
+      "id": "4120794e-c78a-4dad-bac2-3af1f290539c",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extraire toutes les informations pour tous les restaurants dans le tableau 'results'\nreturn items[0].json.results.map(result => {\n  return {\n    json: {\n      name: result.name || null, // Nom du restaurant\n      place_id: result.place_id || null, // ID unique du lieu\n      icon: result.icon || null, // Icône (si disponible)\n      rating: result.rating || null, // Note (si disponible)\n      user_ratings_total: result.user_ratings_total || 0, // Nombre total d'avis\n      photo_reference: result.photos ? result.photos[0].photo_reference : null, // Photo (si disponible)\n      attribution: result.photos && result.photos[0].html_attributions ? result.photos[0].html_attributions[0] : null, // Attribution photo (si disponible)\n      address: result.formatted_address || null, // Adresse complète (si disponible)\n      plus_code: result.plus_code ? result.plus_code.compound_code : null, // Code Plus (si disponible)\n      types: result.types || [], // Types associés au restaurant\n      latitude: result.geometry?.location?.lat || null, // Latitude (si disponible)\n      longitude: result.geometry?.location?.lng || null, // Longitude (si disponible)\n      business_status: result.business_status || null, // Statut de l'entreprise (OPERATIONAL, etc.)\n      open_now: result.opening_hours?.open_now ?? null // Si le restaurant est ouvert maintenant (si disponible)\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -380,
+        360
+      ],
+      "id": "f679de3d-585e-4635-ae82-4228385568d7",
+      "name": "Code4"
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -860,
+        180
+      ],
+      "id": "e2042ed6-2ab2-47e8-bbad-fda517d93112",
+      "name": "Wait",
+      "webhookId": "bcdab87d-71d4-4983-9802-019a63d86736"
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -60,
+        160
+      ],
+      "id": "3daac0f7-0b75-4838-932e-eb6a2604e2e2",
+      "name": "Wait1",
+      "webhookId": "bcdab87d-71d4-4983-9802-019a63d86736"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5f5b7fc5-b589-466c-a144-d5adb655223a",
+              "name": "place_id",
+              "value": "={{ $json.place_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -380,
+        540
+      ],
+      "id": "72b03bc9-59e5-4690-bcfc-b46a65653793",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -140,
+        540
+      ],
+      "id": "ddbc442d-7cc5-479d-8355-739a2de2051d",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "name": "Replace Me",
+      "typeVersion": 1,
+      "position": [
+        500,
+        620
+      ],
+      "id": "bb14c47a-6a7b-46f1-a4a8-09046bd81d48"
+    },
+    {
+      "parameters": {
+        "url": "=https://maps.googleapis.com/maps/api/place/details/json?placeid={{$json[\"place_id\"]}}&key=AIzaSyD26SBDx0y_zVHM30FGrC0BiQm6RrJwpmM",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        600
+      ],
+      "id": "49313c8e-94fd-4a9f-946a-80a7e014b77a",
+      "name": "HTTP Request3"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        -280,
+        960
+      ],
+      "id": "bbe1ae76-acb7-4a20-8364-830e0e7dfa45",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -280,
+        1200
+      ],
+      "id": "38d41025-8a08-4c86-96d7-2ced05d08c79",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "XqGWu9bBJposGc8i",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const data = item.json;\n\n  // Types (liste)\n  const types = Array.isArray(data.types) ? data.types.join(', ') : 'N/A';\n\n  // Horaires d'ouverture\n  const openingHours = data.opening_hours && Array.isArray(data.opening_hours)\n    ? data.opening_hours.map(h => `- ${h}`).join('\\n')\n    : 'N/A';\n\n  // Avis utilisateurs (max 10)\n  const reviewsList = Array.isArray(data.reviews) ? data.reviews.slice(0, 10) : [];\n  const formattedReviews = reviewsList\n    .filter(r => r.text)\n    .map(r => `- ${r.author_name || 'Unknown'} (${r.rating || '?'}★): \"${r.text}\" ${r.time ? `(${r.time})` : ''}`)\n    .join('\\n');\n\n  const reviewText = formattedReviews || 'No user reviews.';\n\n  // Prompt IA (contenant toutes les infos)\n  const prompt = `\nYou are an AI assistant helping to determine whether a restaurant is a Chinese restaurant based on provided information.\n\nName: ${data.name || 'N/A'}\nAddress: ${data.address || 'N/A'}\nCoordinates: ${data.latitude || 'N/A'}, ${data.longitude || 'N/A'}\nPhone: ${data.international_phone_number || data.phone_number || 'N/A'}\nGoogle Maps: ${data.google_maps_url || 'N/A'}\nRating: ${data.rating || 'N/A'} (${data.total_reviews || '0'} reviews)\nTypes: ${types}\nDelivery: ${data.delivery ? 'Yes' : 'No'}\nDine-in: ${data.dine_in ? 'Yes' : 'No'}\nTakeout: ${data.takeout ? 'Yes' : 'No'}\nServes Breakfast: ${data.serves_breakfast ? 'Yes' : 'No'}\nServes Lunch: ${data.serves_lunch ? 'Yes' : 'No'}\nServes Dinner: ${data.serves_dinner ? 'Yes' : 'No'}\nServes Vegetarian: ${data.serves_vegetarian ? 'Yes' : 'No'}\nServes Wine: ${data.serves_wine ? 'Yes' : 'No'}\nServes Beer: ${data.serves_beer ? 'Yes' : 'No'}\nWheelchair Accessible: ${data.wheelchair_accessible ? 'Yes' : 'No'}\n\nOpening hours:\n${openingHours}\n\nUser reviews:\n${reviewText}\n\nPlease analyze the content and estimate the likelihood that this is a Chinese restaurant. Be logical, and base your conclusion only on the data provided.\n\nReturn only this JSON:\n{\n  \"chinese_match_score\": \"XX%\"\n}\n`;\n\n  return {\n    json: {\n      prompt\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -540,
+        1120
+      ],
+      "id": "30f2b1df-10da-4674-b33f-f2ab5ae9b205",
+      "name": "Code8"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const place = item.json.result;\n\n  return {\n    json: {\n      name: place.name || null,\n      address: place.formatted_address || null,\n      latitude: place.geometry?.location?.lat || null,\n      longitude: place.geometry?.location?.lng || null,\n      phone_number: place.formatted_phone_number || null,\n      international_phone_number: place.international_phone_number || null,\n      website: place.website || null,\n      google_maps_url: place.url || null,\n      rating: place.rating || null,\n      total_reviews: place.user_ratings_total || null,\n      types: place.types || [],\n      opening_hours: place.opening_hours?.weekday_text || [],\n      reviews: place.reviews?.map(review => ({\n        author_name: review.author_name,\n        rating: review.rating,\n        text: review.text,\n        time: review.relative_time_description\n      })) || [],\n      photo_references: place.photos?.map(photo => photo.photo_reference) || []\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -780,
+        820
+      ],
+      "id": "55a51c0d-0628-4cea-ac46-d882217484e7",
+      "name": "Code7"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d9e812f6-fc4b-414d-aec8-9493659f99d5",
+              "name": "name",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "6dd99bf7-c411-40bc-982a-08bbd1a53994",
+              "name": "address",
+              "value": "={{ $json.address }}",
+              "type": "string"
+            },
+            {
+              "id": "41dd9619-807d-4130-90b9-00d8cb607e28",
+              "name": "latitude",
+              "value": "={{ $json.latitude }}",
+              "type": "number"
+            },
+            {
+              "id": "a062cc32-7572-4c47-82a1-7c11af63f550",
+              "name": "longitude",
+              "value": "={{ $json.longitude }}",
+              "type": "number"
+            },
+            {
+              "id": "d935887d-2de7-4dfd-a582-1e04dd6bc890",
+              "name": "google_maps_url",
+              "value": "={{ $json.google_maps_url }}",
+              "type": "string"
+            },
+            {
+              "id": "31026e8e-82c8-49e4-91cf-8e64fb93a375",
+              "name": "opening_hours",
+              "value": "={{ $json.opening_hours }}",
+              "type": "array"
+            },
+            {
+              "id": "f9827ae4-f2c8-4610-839a-c31a1e1a2300",
+              "name": "photo_references[0]",
+              "value": "={{ $json.photo_references[0] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        380,
+        880
+      ],
+      "id": "c6b5909b-6271-499b-b451-d11b0c7a30fa",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        340,
+        1120
+      ],
+      "id": "0a053023-2f13-4e51-8491-6c1afb41e1c5",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "jsCode": "function sanitizeFileName(name) {\n  return name.replace(/[<>:\"/\\\\|?*]+/g, '').replace(/\\s+/g, '_');\n}\n\n// Génère les sections HTML pour chaque restaurant\nconst restaurantSections = items.map(item => {\n  const r = item.json;\n\n  // Extraire le score de correspondance\n  let chineseScore = 'Non spécifié';\n  try {\n    const jsonMatch = r.output?.match(/{[\\s\\S]+}/);\n    if (jsonMatch) {\n      const parsed = JSON.parse(jsonMatch[0]);\n      chineseScore = parsed.chinese_match_score || 'Non spécifié';\n    }\n  } catch (e) {\n    // Silencieux si parsing échoue\n  }\n\n  const photoReference = (r.photo_references && r.photo_references[0]) || null;\n  const imageTag = photoReference\n    ? `<img src=\"https://maps.googleapis.com/maps/api/place/photo?maxwidth=600&photoreference=${photoReference}&key=AIzaSyD26SBDx0y_zVHM30FGrC0BiQm6RrJwpmM\" \n             alt=\"Photo de ${r.name}\" class=\"restaurant-photo\">`\n    : '<div class=\"no-photo\">Aucune photo disponible</div>';\n\n  const horaires = Array.isArray(r.opening_hours)\n    ? r.opening_hours.map(h => `<li>${h}</li>`).join('')\n    : '<li>Non spécifié</li>';\n\n  return `\n    <section class=\"restaurant\">\n      <h2>${r.name || 'Nom inconnu'}</h2>\n      ${imageTag}\n      <div class=\"info\">\n        <p><strong>Adresse :</strong> ${r.address || 'Non spécifiée'}</p>\n        <p><strong>Score de correspondance chinoise :</strong> ${chineseScore}</p>\n        <p><strong>Horaires d'ouverture :</strong></p>\n        <ul>${horaires}</ul>\n        <p><strong>Google Maps :</strong> <a href=\"${r.google_maps_url || '#'}\" target=\"_blank\">Voir sur la carte</a></p>\n      </div>\n    </section>\n  `;\n}).join('\\n');\n\n// Page HTML complète\nconst fullHtml = `\n<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Restaurants Chinois à Antananarivo</title>\n  <style>\n    body {\n      background: linear-gradient(to right, #f5f7fa, #c3cfe2);\n      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n      margin: 0;\n      padding: 0;\n      color: #2c3e50;\n    }\n    header {\n      background-color: #b30000;\n      color: white;\n      padding: 40px 0;\n      text-align: center;\n      box-shadow: 0 4px 8px rgba(0,0,0,0.2);\n    }\n    header h1 {\n      font-size: 2.8em;\n      margin: 0;\n      font-family: 'Georgia', serif;\n      letter-spacing: 1px;\n    }\n    .restaurant {\n      background: white;\n      margin: 40px auto;\n      padding: 30px;\n      width: 85%;\n      max-width: 900px;\n      border-left: 10px solid #b30000;\n      box-shadow: 0 4px 12px rgba(0,0,0,0.1);\n      border-radius: 12px;\n    }\n    .restaurant h2 {\n      font-size: 2em;\n      color: #b30000;\n      margin-top: 0;\n    }\n    .restaurant-photo {\n      width: 100%;\n      border-radius: 10px;\n      margin-top: 15px;\n      box-shadow: 0 2px 6px rgba(0,0,0,0.1);\n    }\n    .no-photo {\n      margin-top: 15px;\n      font-style: italic;\n      color: #888;\n      background: #eee;\n      padding: 12px;\n      border-radius: 6px;\n      text-align: center;\n    }\n    .info p, .info ul {\n      font-size: 1.05em;\n      margin: 15px 0;\n      line-height: 1.6;\n    }\n    .info ul {\n      padding-left: 20px;\n    }\n    .info a {\n      color: #0066cc;\n      text-decoration: none;\n      font-weight: bold;\n    }\n    .info a:hover {\n      text-decoration: underline;\n    }\n  </style>\n</head>\n<body>\n  <header>\n    <h1>Restaurants Chinois à Antananarivo</h1>\n  </header>\n  ${restaurantSections}\n</body>\n</html>\n`;\n\n// Encodage Base64 pour export dans n8n\nconst buffer = Buffer.from(fullHtml, 'utf8');\nconst base64data = buffer.toString('base64');\n\n// Retourner le fichier encodé\nreturn [\n  {\n    binary: {\n      data: {\n        data: base64data,\n        mimeType: 'text/html',\n        fileName: 'restaurants_chinois_antananarivo.html'\n      }\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        820,
+        1100
+      ],
+      "id": "fbb4c8b8-bce2-4430-9666-9227c170fdc8",
+      "name": "Code10"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Code4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code4": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Code7",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replace Me": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Replace Me",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code8": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Code7": {
+      "main": [
+        [
+          {
+            "node": "Code8",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Code10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "774777a1-73b9-4e98-a604-37c9bbd963be",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8e039c7f63d2b56437ff5fc8f30a0f0bd027a1c563089b99112c82cce2c13d97"
+  },
+  "id": "qVriwpnELtYeV2Wq",
+  "tags": []
+}
