@@ -1,0 +1,292 @@
+{
+  "name": "My workflow 6",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -3040,
+        200
+      ],
+      "id": "b7b09c49-8b23-41c8-b9ff-bd076c13b8ae",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Générer une liste d'indices de départ pour la pagination\nconst maxPages = 3; // Limite à 1 page (par exemple, 20 restaurants max avec num=20)\nconst resultsPerPage = 20; // Doit correspondre à \"num\" dans Nearby Search\nconst startIndices = Array.from({ length: maxPages }, (_, i) => i * resultsPerPage);\n\nreturn startIndices.map(start => ({\n  json: { start }\n}));"
+      },
+      "id": "1280e53d-8756-4df8-9933-ff4c154979e3",
+      "name": "Paginate1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2820,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search.json?engine=google_maps",
+        "options": {},
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "key",
+              "value": "95c57417faa1c9943ab3e885f084705427d3fe6615e1d7db964d0b20f7ffa88d"
+            },
+            {
+              "name": "q",
+              "value": "restaurants chinois antananarivo"
+            },
+            {
+              "name": "num",
+              "value": "20"
+            },
+            {
+              "name": "start",
+              "value": "={{ $json.start || 0 }}"
+            },
+            {
+              "name": "ll",
+              "value": "@-18.8792,47.5079,15z"
+            },
+            {
+              "name": "type",
+              "value": "search"
+            }
+          ]
+        }
+      },
+      "id": "8f70402c-b358-4afa-ae7f-ea67f04d2f6c",
+      "name": "Nearby Search1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        -2600,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const allResults = $input.all().flatMap(item => item.json?.local_results || []);\n\nreturn allResults.map(place => {\n  const latitude = parseFloat(place.gps_coordinates?.latitude);\n  const longitude = parseFloat(place.gps_coordinates?.longitude);\n  if (isNaN(latitude) || isNaN(longitude)) {\n    return {\n      json: {\n        nom: place.title || 'Inconnu',\n        contact: place.phone || 'Aucun',\n        adresse: place.address || 'Inconnue',\n        latitude: null,\n        longitude: null,\n        specialite: place.type || 'Aucune',\n        photo: place.thumbnail,\n        rating: place.rating || null,\n        description: place.description || null,\n        data_id: place.data_id || null,\n        error: 'Coordonnées invalides'\n      }\n    };\n  }\n  return {\n    json: {\n      nom: place.title || 'Inconnu',\n      contact: place.phone || 'Aucun',\n      adresse: place.address || 'Inconnue',\n      latitude: latitude,\n      longitude: longitude,\n      specialite: place.type || 'Aucune',\n      photo: place.thumbnail,\n      rating: place.rating || null,\n      description: place.description || null,\n      data_id: place.data_id || null\n    }\n  };\n}).filter(item => item.json);"
+      },
+      "id": "01fa9e0d-05c8-4c9c-9244-f0cc8a338b77",
+      "name": "dataCollect1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2380,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const haversineDistance = (lat1, lon1, lat2, lon2) => {\n  const toRad = (value) => (value * Math.PI) / 180;\n  const R = 6371;\n  const dLat = toRad(lat2 - lat1);\n  const dLon = toRad(lon2 - lon1);\n  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);\n  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));\n  return R * c;\n};\n\nconst sigmoid = (z) => {\n  return 1 / (1 + Math.exp(-z));\n};\n\nconst calculateX1Score = (nom) => {\n  const chineseKeywords = ['chinese', 'china', 'mandarin', 'szechuan', 'cantonese', 'pékin', 'dragon','chinois','chine','huang','凤城','吕府私房菜','佬湘好','Fu','Shanghai','吕府私房菜','Yixiang','Tianjie','Wai','Sao','JiGongBao','中国餐馆'];\n  const moderateKeywords = ['asian', 'pan-asian', 'oriental', 'asia', 'jade', 'lotus'];\n  const nomLower = (nom || '').toLowerCase();\n  if (chineseKeywords.some(keyword => nomLower.includes(keyword))) {\n    return 1.0;\n  }\n  if (moderateKeywords.some(keyword => nomLower.includes(keyword))) {\n    return 0.5;\n  }\n  return 0.0;\n};\n\nconst calculateX2Score = (restaurant, allRestaurants) => {\n  const lat = parseFloat(restaurant.latitude);\n  const lon = parseFloat(restaurant.longitude);\n  if (isNaN(lat) || isNaN(lon)) return 0.0;\n\n  const distances = allRestaurants\n    .filter(r => r !== restaurant && parseFloat(r.latitude) && parseFloat(r.longitude))\n    .map(r => ({\n      restaurant: r,\n      distance: haversineDistance(lat, lon, parseFloat(r.latitude), parseFloat(r.longitude))\n    }))\n    .sort((a, b) => a.distance - b.distance)\n    .slice(0, 5);\n\n  let score = 0;\n  distances.forEach(({ restaurant, distance }) => {\n    const neighborScore = calculateX1Score(restaurant.nom);\n    if (distance < 1) {\n      score += neighborScore * 0.4;\n    } else if (distance < 5) {\n      score += neighborScore * 0.2;\n    } else {\n      score += neighborScore * 0.1;\n    }\n  });\n\n  return score / 5;\n};\n\nconst calculateX3Score = (latitude, longitude) => {\n  if (isNaN(latitude) || isNaN(longitude)) return 0.0;\n\n  const chineseDistricts = [\n    { name: 'Behoririka', lat: -18.9050, lon: 47.5250, weight: 1.0 },\n    { name: 'Analakely', lat: -18.9065, lon: 47.5269, weight: 0.8 },\n    { name: 'Tsaralalàna', lat: -18.9074, lon: 47.5211, weight: 0.7 },\n    { name: 'Andravoahangy Atsinanana', lat: -18.8980, lon: 47.5370, weight: 0.6 },\n    { name: 'Antanimena', lat: -18.8985, lon: 47.5260, weight: 0.5 },\n    { name: 'Ambodifilaho', lat: -18.9055, lon: 47.5275, weight: 0.4 }\n  ];\n\n  const closestDistrict = chineseDistricts.reduce((closest, district) => {\n    const distance = haversineDistance(latitude, longitude, district.lat, district.lon);\n    if (!closest || distance < closest.distance) {\n      return { ...district, distance };\n    }\n    return closest;\n  }, null);\n\n  if (!closestDistrict) return 0.0;\n  if (closestDistrict.distance < 1) {\n    return closestDistrict.weight;\n  } else if (closestDistrict.distance < 3) {\n    return closestDistrict.weight * 0.5;\n  } else {\n    return 0.1;\n  }\n};\n\nconst calculateX4Score = (specialite) => {\n  const chineseKeywords = ['chinese', 'china', 'mandarin', 'szechuan', 'cantonese', 'dim sum', 'wok'];\n  const moderateKeywords = ['asian', 'pan-asian', 'oriental', 'asia'];\n  const specialiteLower = (specialite || '').toLowerCase();\n  if (chineseKeywords.some(keyword => specialiteLower.includes(keyword))) {\n    return 1.0;\n  }\n  if (moderateKeywords.some(keyword => specialiteLower.includes(keyword))) {\n    return 0.5;\n  }\n  return 0.0;\n};\n\nconst calculateX5Score = (nom, latitude, longitude) => {\n  const s1 = calculateX1Score(nom);\n  const s3 = calculateX3Score(latitude, longitude);\n  return s1 * s3;\n};\n\nconst w1 = 0.30;  // Nom (poids fort pour nom chinois)\nconst w2 = 0.05;  // Proximité restaurants (peu prioritaire)\nconst w3 = 0.15;  // Proximité quartiers chinois\nconst w4 = 0.30;  // Spécialité (poids fort pour spécialité chinoise)\nconst w5 = 0.20;  // Identité-localisation\n\nconst restaurants = $input.all().map(item => item.json).filter(r => r && typeof r === 'object');\nconst results = restaurants.map(restaurant => {\n  const s1 = calculateX1Score(restaurant.nom);\n  const s2 = calculateX2Score(restaurant, restaurants);\n  const s3 = calculateX3Score(parseFloat(restaurant.latitude), parseFloat(restaurant.longitude));\n  const s4 = calculateX4Score(restaurant.specialite);\n  const s5 = calculateX5Score(restaurant.nom, parseFloat(restaurant.latitude), parseFloat(restaurant.longitude));\n\n  const score = w1 * s1 + w2 * s2 + w3 * s3 + w4 * s4 + w5 * s5;\n\n  //const adjustedScore = (score - 0.5) * ;\n  //const probability = sigmoid(adjustedScore);\nconst probability = score;\n  let classification;\n  if (score >= 0.6) {  // Seuil réduit pour capturer plus de restaurants chinois\n    classification = 'Chinois';\n  } else if (score >= 0.25) {\n    classification = 'Modérément Chinois';\n  } else {\n    classification = 'Non Chinois';\n  }\n\n  return {\n    json: {\n      ...restaurant,\n      classification,\n      score_x1: s1,\n      score_x2: s2,\n      score_x3: s3,\n      score_x4: s4,\n      score_x5: s5,\n      score_total: score,\n      probability: probability\n    }\n  };\n});\n\nreturn results;"
+      },
+      "id": "0d13c899-da17-4db6-8344-ac0f3e5489d8",
+      "name": "classifyRestaurants",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2160,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const escapeHtml = (unsafe) => {\n  if (typeof unsafe !== 'string') return 'Non disponible';\n  return unsafe\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&apos;');\n};\n\nconst validateImageUrl = (url) => {\n  if (!url || typeof url !== 'string') {\n    console.log('Image URL invalide ou absente:', url);\n    return null;\n  }\n  const urlPattern = /^https?:\\/\\/.+/i;\n  if (urlPattern.test(url)) {\n    try {\n      new URL(url);\n      console.log('Image URL valide:', url);\n      return url;\n    } catch {\n      console.log('Image URL invalide:', url);\n      return null;\n    }\n  }\n  console.log('Image URL non conforme:', url);\n  return null;\n};\n\nlet restaurants = [];\ntry {\n  restaurants = $input.all().map(item => item.json).filter(r => r && typeof r === 'object');\n  if (restaurants.length === 0) {\n    throw new Error('Aucune donnée de restaurant valide trouvée.');\n  }\n} catch (error) {\n  return [{\n    json: { error: 'Erreur lors de la récupération des données', message: error.message },\n  }];\n}\n\nlet htmlContent = `\n<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Liste des Restaurants</title>\n    <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css\">\n    <style>\n        body {\n            font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;\n            margin: 0;\n            padding: 20px;\n            background-color: #f7f9fc;\n            color: #333;\n        }\n        .container {\n            max-width: 1000px;\n            margin: auto;\n            padding: 30px;\n            background: #ffffff;\n            border-radius: 12px;\n            box-shadow: 0 8px 24px rgba(0,0,0,0.1);\n        }\n        .restaurant {\n            border: none;\n            padding: 25px;\n            margin-bottom: 25px;\n            border-radius: 10px;\n            background: #fafafa;\n            transition: transform 0.3s ease, box-shadow 0.3s ease;\n        }\n        .restaurant:hover {\n            transform: translateY(-8px);\n            box-shadow: 0 12px 24px rgba(0,0,0,0.15);\n        }\n        img {\n            max-width: 100%;\n            height: auto;\n            border-radius: 5px;\n            margin-top: 10px;\n            display: block;\n        }\n        img[alt]:not([src]), img[alt][src=\"\"], img[alt][src*=\"via.placeholder.com\"] {\n            display: none !important;\n        }\n        .image-container {\n            margin-top: 10px;\n        }\n        h1 {\n            text-align: center;\n            color: #1a3c34;\n            font-size: 2.5em;\n            margin-bottom: 30px;\n            font-weight: 700;\n        }\n        h2 {\n            margin: 0 0 15px;\n            color: #1a3c34;\n            font-size: 1.8em;\n            font-weight: 600;\n        }\n        .info-grid {\n            display: grid;\n            grid-template-columns: 40px 1fr;\n            gap: 15px;\n            align-items: center;\n            margin-bottom: 20px;\n        }\n        .info-grid i {\n            color: #e67e22;\n            font-size: 1.3em;\n            text-align: center;\n        }\n        .info-grid p {\n            margin: 0;\n            font-size: 1.1em;\n            color: #34495e;\n        }\n        .info-grid p strong {\n            color: #2c3e50;\n            font-weight: 500;\n        }\n        .map {\n            height: 150px;\n            width: 100%;\n            margin-top: 10px;\n            border-radius: 5px;\n        }\n        .map-streetview, .map-satellite {\n            margin-bottom: 10px;\n        }\n        .map-label {\n            font-size: 14px;\n            font-weight: bold;\n            margin-top: 10px;\n            color: #2c3e50;\n        }\n        .error {\n            color: #e74c3c;\n            text-align: center;\n            font-size: 1.1em;\n        }\n        .map-container {\n            display: flex;\n            flex-wrap: wrap;\n            gap: 10px;\n        }\n        .map-container > div {\n            flex: 1;\n            min-width: 300px;\n        }\n        @media (max-width: 768px) {\n            .container {\n                padding: 20px;\n            }\n            .restaurant {\n                padding: 20px;\n            }\n            .info-grid {\n                grid-template-columns: 35px 1fr;\n                gap: 10px;\n            }\n            .map {\n                height: 120px;\n            }\n            .map-container {\n                flex-direction: column;\n            }\n            h1 {\n                font-size: 2em;\n            }\n            h2 {\n                font-size: 1.5em;\n            }\n        }\n        @media (max-width: 480px) {\n            .info-grid p {\n                font-size: 1em;\n            }\n            .info-grid i {\n                font-size: 1.1em;\n            }\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <h1>Liste des Restaurants</h1>\n        <div id=\"location-error\" class=\"error\" style=\"display: none;\">Impossible de détecter votre position</div>\n`;\n\nrestaurants.forEach((restaurant, index) => {\n  const nom = escapeHtml(restaurant.nom || 'Nom inconnu');\n  const contact = escapeHtml(restaurant.contact || 'Non disponible');\n  const adresse = escapeHtml(restaurant.adresse || 'Non disponible');\n  const classification = escapeHtml(restaurant.classification || 'Non classifié');\n  const probability = restaurant.probability ? (restaurant.probability * 100).toFixed(2) + '%' : 'Non disponible';\n  const photo = validateImageUrl(restaurant.photo);\n  const latitude = parseFloat(restaurant.latitude) || null;\n  const longitude = parseFloat(restaurant.longitude) || null;\n  const error = escapeHtml(restaurant.error || '');\n\n  htmlContent += `\n    <div class=\"restaurant\">\n        <h2>${nom}</h2>\n        <div class=\"info-grid\">\n            <i class=\"fas fa-phone\"></i>\n            <p><strong>Téléphone :</strong> ${contact}</p>\n            <i class=\"fas fa-map-marker-alt\"></i>\n            <p><strong>Adresse :</strong> ${adresse}</p>\n            <i class=\"fas fa-tag\"></i>\n            <p><strong>Classification :</strong> ${classification}</p>\n            <i class=\"fas fa-percentage\"></i>\n            <p><strong>Probabilité Chinois :</strong> ${probability}</p>\n            <i class=\"fas fa-globe\"></i>\n            <p><strong>Coordonnées :</strong> \n                ${latitude && longitude ? `Latitude ${latitude}, Longitude ${longitude}` : 'Non disponible'}\n            </p>\n        </div>\n        ${error ? `<p class=\"error\">${error}</p>` : ''}\n        ${photo ? `<div class=\"image-container\"><img src=\"${photo}\" alt=\"Photo de ${nom}\"></div>` : ''}\n        ${latitude && longitude ? `\n          <div class=\"map-container\">\n            <div>\n              <div class=\"map-label\">Street View</div>\n              <div id=\"map-streetview-${index}\" class=\"map map-streetview\"></div>\n            </div>\n            <div>\n              <div class=\"map-label\">Itinéraire (Vue Satellite)</div>\n              <div id=\"map-satellite-${index}\" class=\"map map-satellite\"></div>\n            </div>\n          </div>\n        ` : ''}\n    </div>\n  `;\n});\n\nhtmlContent += `\n      </div>\n      <script src=\"https://maps.googleapis.com/maps/api/js?key=AIzaSyD26SBDx0y_zVHM30FGrC0BiQm6RrJwpmM&v=3.exp&libraries=geometry,places\"></script>\n      <script>\n          const views = [];\n          const isStreetViewAvailable = [];\n          let userLocation = null;\n\n          function getUserLocation(callback) {\n              if (navigator.geolocation) {\n                  navigator.geolocation.getCurrentPosition(\n                      (position) => {\n                          userLocation = {\n                              lat: position.coords.latitude,\n                              lng: position.coords.longitude\n                          };\n                          console.log(\"Position utilisateur:\", userLocation);\n                          callback();\n                      },\n                      (error) => {\n                          document.getElementById(\"location-error\").style.display = \"block\";\n                          console.error(\"Erreur géolocalisation:\", error);\n                          callback();\n                      }\n                  );\n              } else {\n                  document.getElementById(\"location-error\").style.display = \"block\";\n                  console.error(\"Géolocalisation non supportée\");\n                  callback();\n              }\n          }\n\n          function initMaps() {\n              getUserLocation(() => {\n                  try {\n                      ${restaurants.map((restaurant, index) => {\n                        const latitude = parseFloat(restaurant.latitude) || null;\n                        const longitude = parseFloat(restaurant.longitude) || null;\n                        if (latitude && longitude) {\n                          return `\n                            try {\n                                function showStreetView${index}() {\n                                    console.log(\"Affichage Street View pour restaurant ${index}\");\n                                    const streetViewDiv = document.getElementById(\"map-streetview-${index}\");\n                                    if (!streetViewDiv) {\n                                        console.error(\"Conteneur map-streetview-${index} non trouvé\");\n                                        return;\n                                    }\n                                    const panorama = new google.maps.StreetViewPanorama(\n                                        streetViewDiv,\n                                        {\n                                            position: { lat: ${latitude}, lng: ${longitude} },\n                                            pov: { heading: 0, pitch: 0 },\n                                            zoom: 1,\n                                            addressControl: false,\n                                            fullscreenControl: false,\n                                            motionTracking: false,\n                                            motionTrackingControl: false,\n                                            panControl: false,\n                                            zoomControl: false,\n                                            showRoadLabels: false\n                                        }\n                                    );\n                                    views[${index}] = views[${index}] || {};\n                                    views[${index}].streetview = { type: \"streetview\", instance: panorama };\n                                }\n                                \n                                function showRoute${index}() {\n                                    console.log(\"Affichage itinéraire pour restaurant ${index}\");\n                                    const satelliteDiv = document.getElementById(\"map-satellite-${index}\");\n                                    if (!satelliteDiv) {\n                                        console.error(\"Conteneur map-satellite-${index} non trouvé\");\n                                        return;\n                                    }\n                                    if (!userLocation) {\n                                        satelliteDiv.innerHTML = '<p class=\"error\">Position de l\\\\'utilisateur non disponible</p>';\n                                        console.error(\"Position utilisateur non disponible\");\n                                        return;\n                                    }\n                                    const map = new google.maps.Map(satelliteDiv, {\n                                        center: { lat: ${latitude}, lng: ${longitude} },\n                                        zoom: 14,\n                                        mapTypeId: \"satellite\",\n                                        tilt: 45,\n                                        heading: 0,\n                                        mapTypeControl: false,\n                                        streetViewControl: false,\n                                        rotateControl: true,\n                                        fullscreenControl: false\n                                    });\n                                    map.setTilt(45);\n                                    const directionsService = new google.maps.DirectionsService();\n                                    const directionsRenderer = new google.maps.DirectionsRenderer({\n                                        map: map,\n                                        suppressMarkers: false,\n                                        polylineOptions: {\n                                            strokeColor: \"#0000FF\",\n                                            strokeOpacity: 1.0,\n                                            strokeWeight: 5\n                                        }\n                                    });\n                                    directionsService.route(\n                                        {\n                                            origin: userLocation,\n                                            destination: { lat: ${latitude}, lng: ${longitude} },\n                                            travelMode: google.maps.TravelMode.DRIVING\n                                        },\n                                        (result, status) => {\n                                            if (status === google.maps.DirectionsStatus.OK) {\n                                                directionsRenderer.setDirections(result);\n                                                console.log(\"Itinéraire affiché avec succès pour ${index}\");\n                                            } else {\n                                                satelliteDiv.innerHTML = '<p class=\"error\">Impossible de calculer l\\\\'itinéraire</p>';\n                                                console.error(\"Erreur itinéraire pour ${index}:\", status);\n                                            }\n                                        }\n                                    );\n                                    views[${index}] = views[${index}] || {};\n                                    views[${index}].satellite = { type: \"satellite\", instance: map };\n                                }\n                                \n                                const streetViewService = new google.maps.StreetViewService();\n                                streetViewService.getPanorama({\n                                    location: { lat: ${latitude}, lng: ${longitude} },\n                                    radius: 50\n                                }, (data, status) => {\n                                    isStreetViewAvailable[${index}] = status === google.maps.StreetViewStatus.OK;\n                                    console.log(\"Street View disponible pour ${index}:\", isStreetViewAvailable[${index}]);\n                                    if (isStreetViewAvailable[${index}]) {\n                                        showStreetView${index}();\n                                        showRoute${index}();\n                                    } else {\n                                        document.getElementById(\"map-streetview-${index}\").parentElement.style.display = \"none\";\n                                        showRoute${index}();\n                                    }\n                                });\n                            } catch (err) {\n                                const satelliteDiv = document.getElementById(\"map-satellite-${index}\");\n                                if (satelliteDiv) {\n                                    satelliteDiv.innerHTML = '<p class=\"error\">Erreur de rendu: ' + err.message + '</p>';\n                                }\n                                console.error(\"Erreur pour restaurant ${index}:\", err);\n                            }\n                          `;\n                        }\n                        return '';\n                      }).join('')}\n                      \n                      window.addEventListener(\"keydown\", (event) => {\n                          views.forEach((view, index) => {\n                              if (!view) return;\n                              if (view.streetview && view.streetview.type === \"streetview\") {\n                                  const panorama = view.streetview.instance;\n                                  let pov = panorama.getPov();\n                                  switch (event.key) {\n                                      case \"ArrowUp\":\n                                          const links = panorama.getLinks();\n                                          if (links && links.length > 0) {\n                                              const closestLink = links.reduce((prev, curr) => {\n                                                  const prevDiff = Math.abs((prev.heading - pov.heading + 360) % 360);\n                                                  const currDiff = Math.abs((curr.heading - pov.heading + 360) % 360);\n                                                  return currDiff < prevDiff ? curr : prev;\n                                              });\n                                              panorama.setPano(closestLink.pano);\n                                          }\n                                          break;\n                                      case \"ArrowDown\":\n                                          const reverseLinks = panorama.getLinks();\n                                          if (reverseLinks && reverseLinks.length > 0) {\n                                              const closestReverseLink = reverseLinks.reduce((prev, curr) => {\n                                                  const prevDiff = Math.abs(((prev.heading + 180) % 360 - pov.heading + 360) % 360);\n                                                  const currDiff = Math.abs(((curr.heading + 180) % 360 - pov.heading + 360) % 360);\n                                                  return currDiff < prevDiff ? curr : prev;\n                                              });\n                                              panorama.setPano(closestReverseLink.pano);\n                                          }\n                                          break;\n                                      case \"ArrowLeft\":\n                                          pov.heading = (pov.heading - 5 + 360) % 360;\n                                          panorama.setPov(pov);\n                                          break;\n                                      case \"ArrowRight\":\n                                          pov.heading = (pov.heading + 5) % 360;\n                                          panorama.setPov(pov);\n                                          break;\n                                  }\n                              }\n                              if (view.satellite && view.satellite.type === \"satellite\") {\n                                  const map = view.satellite.instance;\n                                  const center = map.getCenter();\n                                  let lat = center.lat();\n                                  let lng = center.lng();\n                                  const heading = map.getHeading() || 0;\n                                  const rad = heading * Math.PI / 180;\n                                  const step = 0.0001;\n                                  switch (event.key) {\n                                      case \"ArrowUp\":\n                                          lat += step * Math.cos(rad);\n                                          lng += step * Math.sin(rad);\n                                          map.setCenter({ lat, lng });\n                                          break;\n                                      case \"ArrowDown\":\n                                          lat -= step * Math.cos(rad);\n                                          lng -= step * Math.sin(rad);\n                                          map.setCenter({ lat, lng });\n                                          break;\n                                      case \"ArrowLeft\":\n                                          map.setHeading(heading - 5);\n                                          break;\n                                      case \"ArrowRight\":\n                                          map.setHeading(heading + 5);\n                                          break;\n                                  }\n                              }\n                          });\n                      });\n                  } catch (err) {\n                      console.error(\"Erreur globale:\", err);\n                  }\n              });\n          }\n          \n          window.onload = initMaps;\n      </script>\n</body>\n</html>\n`;\n\nreturn [{\n  json: { fileName: 'restaurants.html' },\n  binary: {\n    data: {\n      data: Buffer.from(htmlContent).toString('base64'),\n      mimeType: 'text/html',\n      fileName: 'restaurants.html'\n    }\n  }\n}];"
+      },
+      "id": "060d0c76-e9a6-46ed-a687-45b9cabf11bc",
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1940,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "restaurants.html",
+        "options": {}
+      },
+      "id": "e4fd706c-a85c-40a2-b522-3b34b2ed1e00",
+      "name": "Read/Write Files from Disk1",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -1720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const escapeHtml = (unsafe) => {\n  if (typeof unsafe !== 'string') return 'Non disponible';\n  return unsafe\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&apos;');\n};\n\nlet restaurants = [];\ntry {\n  restaurants = $input.all().map(item => item.json).filter(r => r && typeof r === 'object');\n  if (restaurants.length === 0) {\n    throw new Error('Aucune donnée de restaurant valide trouvée.');\n  }\n} catch (error) {\n  return [{\n    json: { error: 'Erreur lors de la récupération des données', message: error.message },\n  }];\n}\n\nlet htmlContent = `<!DOCTYPE html><html lang=\\\"fr\\\"><head><meta charset=\\\"UTF-8\\\"><meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1.0\\\"><title>Scores de Classification des Restaurants</title>\n<link rel=\\\"stylesheet\\\" href=\\\"https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css\\\">\n<script src=\\\"https://code.jquery.com/jquery-3.7.0.min.js\\\"></script>\n<script src=\\\"https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js\\\"></script>\n<style>\n  body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }\n  h1 { color: #333; }\n  table { width: 100%; border-collapse: collapse; margin-top: 20px; }\n  th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }\n  th { background-color: #0066cc; color: white; cursor: pointer; }\n  tr:nth-child(even) { background-color: #f9f9f9; }\n  tr:hover { background-color: #f1f1f1; }\n  .dataTables_filter { margin-bottom: 10px; }\n  .dataTables_length { margin-bottom: 10px; }\n</style></head><body><h1>Scores de Classification des Restaurants</h1><table id=\\\"scoresTable\\\" class=\\\"display\\\"><thead><tr><th>Nom</th><th>Score x1 (Nom)</th><th>Score x2 (Proximité Restaurants)</th><th>Score x3 (Proximité Quartiers Chinois)</th><th>Score x4 (Spécialité)</th><th>Score x5 (Identité-Localisation)</th><th>Score Total</th></tr></thead><tbody>`;\n\nrestaurants.forEach((restaurant) => {\n  const nom = escapeHtml(restaurant.nom || 'Nom inconnu');\n  const score_x1 = restaurant.score_x1 ? restaurant.score_x1.toFixed(2) : 'Non disponible';\n  const score_x2 = restaurant.score_x2 ? restaurant.score_x2.toFixed(2) : 'Non disponible';\n  const score_x3 = restaurant.score_x3 ? restaurant.score_x3.toFixed(2) : 'Non disponible';\n  const score_x4 = restaurant.score_x4 ? restaurant.score_x4.toFixed(2) : 'Non disponible';\n  const score_x5 = restaurant.score_x5 ? restaurant.score_x5.toFixed(2) : 'Non disponible';\n  const score_total = restaurant.score_total ? restaurant.score_total.toFixed(2) : 'Non disponible';\n\n  htmlContent += `\n    <tr>\n      <td>${nom}</td>\n      <td>${score_x1}</td>\n      <td>${score_x2}</td>\n      <td>${score_x3}</td>\n      <td>${score_x4}</td>\n      <td>${score_x5}</td>\n      <td>${score_total}</td>\n    </tr>\n  `;\n});\n\nhtmlContent += `</tbody></table><script>\n  $(document).ready(function() {\n    $('#scoresTable').DataTable({\n      paging: true,\n      searching: true,\n      ordering: true,\n      pageLength: 10,\n      language: {\n        search: 'Rechercher:',\n        lengthMenu: 'Afficher _MENU_ entrées',\n        info: 'Affichage de _START_ à _END_ sur _TOTAL_ entrées',\n        paginate: {\n          first: 'Premier',\n          last: 'Dernier',\n          next: 'Suivant',\n          previous: 'Précédent'\n        }\n      }\n    });\n  });\n</script></body></html>`;\n\nreturn [{\n  json: { fileName: 'classification_scores.html' },\n  binary: {\n    data: {\n      data: Buffer.from(htmlContent).toString('base64'),\n      mimeType: 'text/html',\n      fileName: 'classification_scores.html'\n    }\n  }\n}];"
+      },
+      "id": "3a5ea29d-5ab5-426e-b59d-7e195671ca3a",
+      "name": "ClassificationScores",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1940,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "classification_scores.html",
+        "options": {}
+      },
+      "id": "0fc1f92d-f813-423b-8c92-6e34273229e1",
+      "name": "Read/Write Files from Disk2",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -1720,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const escapeHtml = (unsafe) => {\n  if (typeof unsafe !== 'string') return 'Non disponible';\n  return unsafe\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&apos;');\n};\nlet restaurants = [];\ntry {\n  restaurants = $input.all().map(item => item.json).filter(r => r && typeof r === 'object');\n  if (restaurants.length === 0) {\n    throw new Error('Aucune donnée de restaurant valide trouvée.');\n  }\n} catch (error) {\n  return [{\n    json: { error: 'Erreur lors de la récupération des données', message: error.message },\n  }];\n}\n\nconst classificationCounts = {\n  'Chinois': 0,\n  'Modérément Chinois': 0,\n  'Non Chinois': 0\n};\n\nrestaurants.forEach(restaurant => {\n  const classification = restaurant.classification || 'Non classifié';\n  if (classificationCounts.hasOwnProperty(classification)) {\n    classificationCounts[classification]++;\n  }\n});\n\nlet htmlContent = `<!DOCTYPE html><html lang=\\\"fr\\\"><head><meta charset=\\\"UTF-8\\\"><meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1.0\\\"><title>Diagramme de Classification des Restaurants</title>\n<script src=\\\"https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js\\\"></script>\n<style>\n  body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }\n  h1 { color: #333; }\n  canvas { max-width: 100%; margin-top: 20px; }\n</style></head><body><h1>Répartition des Classifications des Restaurants</h1><canvas id=\\\"pieChart\\\" width=\\\"400\\\" height=\\\"400\\\"></canvas><script>\n  const ctx = document.getElementById('pieChart').getContext('2d');\n  new Chart(ctx, {\n    type: 'pie',\n    data: {\n      labels: ['Chinois', 'Modérément Chinois', 'Non Chinois'],\n      datasets: [{\n        data: [${classificationCounts['Chinois']}, ${classificationCounts['Modérément Chinois']}, ${classificationCounts['Non Chinois']}],\n        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],\n        borderColor: ['#FF6384', '#36A2EB', '#FFCE56'],\n        borderWidth: 1\n      }]\n    },\n    options: {\n      responsive: true,\n      plugins: {\n        legend: { position: 'top' },\n        title: { display: true, text: 'Répartition des Classifications', font: { size: 18 } }\n      }\n    }\n  });\n</script></body></html>`;\n\nreturn [{\n  json: { fileName: 'classification_pie_chart.html' },\n  binary: {\n    data: {\n      data: Buffer.from(htmlContent).toString('base64'),\n      mimeType: 'text/html',\n      fileName: 'classification_pie_chart.html'\n    }\n  }\n}];"
+      },
+      "id": "b9b9a381-b5ba-4ee2-a309-ad630ddba1fd",
+      "name": "PieChart",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1940,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "classification_pie_chart.html",
+        "options": {}
+      },
+      "id": "d59f0464-a4c3-4a1a-bb07-f4c3db8597f9",
+      "name": "Read/Write Files from Disk3",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -1720,
+        400
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Paginate1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Paginate1": {
+      "main": [
+        [
+          {
+            "node": "Nearby Search1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nearby Search1": {
+      "main": [
+        [
+          {
+            "node": "dataCollect1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "dataCollect1": {
+      "main": [
+        [
+          {
+            "node": "classifyRestaurants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "classifyRestaurants": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "ClassificationScores",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "PieChart",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ClassificationScores": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PieChart": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f97986d8-86e7-47ba-a1f9-b968265bba5b",
+  "meta": {
+    "instanceId": "52d68418f1aae01c45db1eaf0100898e2b12f6213baf84cf93b1295f80db2c38"
+  },
+  "id": "y0YVEX5MNi87TY2p",
+  "tags": []
+}

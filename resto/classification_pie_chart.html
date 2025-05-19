@@ -1,0 +1,28 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Diagramme de Classification des Restaurants</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+  h1 { color: #333; }
+  canvas { max-width: 100%; margin-top: 20px; }
+</style></head><body><h1>Répartition des Classifications des Restaurants</h1><canvas id="pieChart" width="400" height="400"></canvas><script>
+  const ctx = document.getElementById('pieChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: ['Chinois', 'Modérément Chinois', 'Non Chinois'],
+      datasets: [{
+        data: [7, 38, 15],
+        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+        borderColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top' },
+        title: { display: true, text: 'Répartition des Classifications', font: { size: 18 } }
+      }
+    }
+  });
+</script></body></html>

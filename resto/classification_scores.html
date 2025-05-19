@@ -1,0 +1,635 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Scores de Classification des Restaurants</title>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
+  h1 { color: #333; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+  th { background-color: #0066cc; color: white; cursor: pointer; }
+  tr:nth-child(even) { background-color: #f9f9f9; }
+  tr:hover { background-color: #f1f1f1; }
+  .dataTables_filter { margin-bottom: 10px; }
+  .dataTables_length { margin-bottom: 10px; }
+</style></head><body><h1>Scores de Classification des Restaurants</h1><table id="scoresTable" class="display"><thead><tr><th>Nom</th><th>Score x1 (Nom)</th><th>Score x2 (Proximité Restaurants)</th><th>Score x3 (Proximité Quartiers Chinois)</th><th>Score x4 (Spécialité)</th><th>Score x5 (Identité-Localisation)</th><th>Score Total</th></tr></thead><tbody>
+    <tr>
+      <td>La Fleur De Sel</td>
+      <td>Non disponible</td>
+      <td>Non disponible</td>
+      <td>0.30</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.34</td>
+    </tr>
+  
+    <tr>
+      <td>Grand Resto de Chine</td>
+      <td>1.00</td>
+      <td>0.12</td>
+      <td>0.40</td>
+      <td>0.50</td>
+      <td>0.40</td>
+      <td>0.60</td>
+    </tr>
+  
+    <tr>
+      <td>l&apos;Orient Asian Fusion Restaurant</td>
+      <td>0.50</td>
+      <td>0.08</td>
+      <td>0.80</td>
+      <td>0.50</td>
+      <td>0.40</td>
+      <td>0.50</td>
+    </tr>
+  
+    <tr>
+      <td>Restaurant Fong Mei</td>
+      <td>Non disponible</td>
+      <td>Non disponible</td>
+      <td>0.10</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.32</td>
+    </tr>
+  
+    <tr>
+      <td>凤城 Soleil</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.10</td>
+      <td>1.00</td>
+      <td>0.10</td>
+      <td>0.64</td>
+    </tr>
+  
+    <tr>
+      <td>Hirondelle &quot;燕子&quot; Chinese FOOD</td>
+      <td>1.00</td>
+      <td>0.12</td>
+      <td>0.40</td>
+      <td>Non disponible</td>
+      <td>0.40</td>
+      <td>0.45</td>
+    </tr>
+  
+    <tr>
+      <td>Restaurant L&apos;EURASIE - Ankorondrano</td>
+      <td>Non disponible</td>
+      <td>0.04</td>
+      <td>0.25</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.34</td>
+    </tr>
+  
+    <tr>
+      <td>Dun Huang</td>
+      <td>1.00</td>
+      <td>0.04</td>
+      <td>1.00</td>
+      <td>1.00</td>
+      <td>1.00</td>
+      <td>0.95</td>
+    </tr>
+  
+    <tr>
+      <td>Restaurant La Belle Ville</td>
+      <td>Non disponible</td>
+      <td>0.12</td>
+      <td>0.20</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.34</td>
+    </tr>
+  
+    <tr>
+      <td>Le Grand Orient</td>
+      <td>Non disponible</td>
+      <td>Non disponible</td>
+      <td>0.10</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.32</td>
+    </tr>
+  
+    <tr>
+      <td>O Loft Chinois</td>
+      <td>1.00</td>
+      <td>0.08</td>
+      <td>0.50</td>
+      <td>Non disponible</td>
+      <td>0.50</td>
+      <td>0.48</td>
+    </tr>
+  
+    <tr>
+      <td>Zen Garden</td>
+      <td>Non disponible</td>
+      <td>Non disponible</td>
+      <td>0.10</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.32</td>
+    </tr>
+  
+    <tr>
+      <td>Dragon Royal Restaurant IVATO</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.10</td>
+      <td>0.50</td>
+      <td>0.10</td>
+      <td>0.48</td>
+    </tr>
+  
+    <tr>
+      <td>Restaurant Lai</td>
+      <td>Non disponible</td>
+      <td>0.16</td>
+      <td>0.35</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.36</td>
+    </tr>
+  
+    <tr>
+      <td>吕府私房菜（KTV）</td>
+      <td>1.00</td>
+      <td>0.08</td>
+      <td>0.35</td>
+      <td>1.00</td>
+      <td>0.35</td>
+      <td>0.73</td>
+    </tr>
+  
+    <tr>
+      <td>Fleuve Rouge (Red River)</td>
+      <td>Non disponible</td>
+      <td>0.12</td>
+      <td>0.40</td>
+      <td>Non disponible</td>
+      <td>Non disponible</td>
+      <td>0.07</td>
+    </tr>
+  
+    <tr>
+      <td>佬湘好</td>
+      <td>1.00</td>
+      <td>0.04</td>
+      <td>0.10</td>
+      <td>1.00</td>
+      <td>0.10</td>
+      <td>0.64</td>
+    </tr>
+  
+    <tr>
+      <td>La Jonquille</td>
+      <td>Non disponible</td>
+      <td>0.12</td>
+      <td>0.20</td>
+      <td>Non disponible</td>
+      <td>Non disponible</td>
+      <td>0.04</td>
+    </tr>
+  
+    <tr>
+      <td>Restaurant Shi Fu</td>
+      <td>Non disponible</td>
+      <td>0.04</td>
+      <td>0.10</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.32</td>
+    </tr>
+  
+    <tr>
+      <td>Arirang Restaurant</td>
+      <td>Non disponible</td>
+      <td>Non disponible</td>
+      <td>0.10</td>
+      <td>Non disponible</td>
+      <td>Non disponible</td>
+      <td>0.01</td>
+    </tr>
+  
+    <tr>
+      <td>Lotus Blanc Restaurant 荷花酒店</td>
+      <td>0.50</td>
+      <td>0.16</td>
+      <td>0.40</td>
+      <td>1.00</td>
+      <td>0.20</td>
+      <td>0.56</td>
+    </tr>
+  
+    <tr>
+      <td>Restaurant Le Cantilène</td>
+      <td>Non disponible</td>
+      <td>0.16</td>
+      <td>0.35</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.36</td>
+    </tr>
+  
+    <tr>
+      <td>Sam Voky</td>
+      <td>Non disponible</td>
+      <td>Non disponible</td>
+      <td>0.70</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.40</td>
+    </tr>
+  
+    <tr>
+      <td>AZALEE MAMORY IVATO</td>
+      <td>Non disponible</td>
+      <td>0.08</td>
+      <td>0.10</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.32</td>
+    </tr>
+  
+    <tr>
+      <td>Restaurant Shanghai</td>
+      <td>Non disponible</td>
+      <td>0.08</td>
+      <td>0.70</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.41</td>
+    </tr>
+  
+    <tr>
+      <td>Kaizen Restaurant</td>
+      <td>Non disponible</td>
+      <td>0.20</td>
+      <td>0.40</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.37</td>
+    </tr>
+  
+    <tr>
+      <td>Le Grand Tsang</td>
+      <td>Non disponible</td>
+      <td>0.12</td>
+      <td>0.40</td>
+      <td>0.50</td>
+      <td>Non disponible</td>
+      <td>0.22</td>
+    </tr>
+  
+    <tr>
+      <td>HONG KONG Restaurant - salon de The</td>
+      <td>Non disponible</td>
+      <td>0.12</td>
+      <td>0.10</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.32</td>
+    </tr>
+  
+    <tr>
+      <td>Laï tsock</td>
+      <td>Non disponible</td>
+      <td>0.12</td>
+      <td>0.40</td>
+      <td>0.50</td>
+      <td>Non disponible</td>
+      <td>0.22</td>
+    </tr>
+  
+    <tr>
+      <td>吕府私房菜</td>
+      <td>1.00</td>
+      <td>0.08</td>
+      <td>0.35</td>
+      <td>1.00</td>
+      <td>0.35</td>
+      <td>0.73</td>
+    </tr>
+  
+    <tr>
+      <td>Le Pont Rouge</td>
+      <td>Non disponible</td>
+      <td>Non disponible</td>
+      <td>0.70</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.40</td>
+    </tr>
+  
+    <tr>
+      <td>逸香酒樓 Yixiang Restaurant</td>
+      <td>Non disponible</td>
+      <td>0.12</td>
+      <td>0.25</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.34</td>
+    </tr>
+  
+    <tr>
+      <td>Hotel New Century</td>
+      <td>Non disponible</td>
+      <td>0.16</td>
+      <td>1.00</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.46</td>
+    </tr>
+  
+    <tr>
+      <td>Restaurant Le JASMIN</td>
+      <td>Non disponible</td>
+      <td>0.04</td>
+      <td>0.80</td>
+      <td>0.50</td>
+      <td>Non disponible</td>
+      <td>0.27</td>
+    </tr>
+  
+    <tr>
+      <td>Restaurant Soleil d&apos;Orient</td>
+      <td>Non disponible</td>
+      <td>0.04</td>
+      <td>0.80</td>
+      <td>0.50</td>
+      <td>Non disponible</td>
+      <td>0.27</td>
+    </tr>
+  
+    <tr>
+      <td>Lakoziako</td>
+      <td>Non disponible</td>
+      <td>0.08</td>
+      <td>1.00</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.45</td>
+    </tr>
+  
+    <tr>
+      <td>Wai Man</td>
+      <td>Non disponible</td>
+      <td>0.08</td>
+      <td>0.35</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.36</td>
+    </tr>
+  
+    <tr>
+      <td>Dragon rouge</td>
+      <td>1.00</td>
+      <td>0.08</td>
+      <td>0.50</td>
+      <td>1.00</td>
+      <td>0.50</td>
+      <td>0.78</td>
+    </tr>
+  
+    <tr>
+      <td>La voie du Rossignol</td>
+      <td>Non disponible</td>
+      <td>0.04</td>
+      <td>0.50</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.38</td>
+    </tr>
+  
+    <tr>
+      <td>Le Petit Bouchon</td>
+      <td>Non disponible</td>
+      <td>0.16</td>
+      <td>0.35</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.36</td>
+    </tr>
+  
+    <tr>
+      <td>TSANG-KAU</td>
+      <td>Non disponible</td>
+      <td>Non disponible</td>
+      <td>0.70</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.40</td>
+    </tr>
+  
+    <tr>
+      <td>Sao Kuun</td>
+      <td>Non disponible</td>
+      <td>0.08</td>
+      <td>0.10</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.32</td>
+    </tr>
+  
+    <tr>
+      <td>Phô Resto Ivato</td>
+      <td>Non disponible</td>
+      <td>0.12</td>
+      <td>0.10</td>
+      <td>0.50</td>
+      <td>Non disponible</td>
+      <td>0.17</td>
+    </tr>
+  
+    <tr>
+      <td>JiGongBao(雞宮煲)</td>
+      <td>Non disponible</td>
+      <td>0.04</td>
+      <td>0.10</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.32</td>
+    </tr>
+  
+    <tr>
+      <td>O&apos;Gourmet</td>
+      <td>Non disponible</td>
+      <td>0.10</td>
+      <td>0.10</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.32</td>
+    </tr>
+  
+    <tr>
+      <td>中国餐馆</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.40</td>
+      <td>1.00</td>
+      <td>0.40</td>
+      <td>0.74</td>
+    </tr>
+  
+    <tr>
+      <td>Hotel Seoul &amp; Restaurant</td>
+      <td>Non disponible</td>
+      <td>0.04</td>
+      <td>0.35</td>
+      <td>Non disponible</td>
+      <td>Non disponible</td>
+      <td>0.05</td>
+    </tr>
+  
+    <tr>
+      <td>Fortuna Tana</td>
+      <td>Non disponible</td>
+      <td>0.16</td>
+      <td>0.50</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.38</td>
+    </tr>
+  
+    <tr>
+      <td>Naïla RESTAURANT</td>
+      <td>Non disponible</td>
+      <td>0.08</td>
+      <td>0.10</td>
+      <td>Non disponible</td>
+      <td>Non disponible</td>
+      <td>0.02</td>
+    </tr>
+  
+    <tr>
+      <td>Tianjie food (天街 中华料理)</td>
+      <td>Non disponible</td>
+      <td>0.08</td>
+      <td>0.40</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.36</td>
+    </tr>
+  
+    <tr>
+      <td>Kims Restaurant</td>
+      <td>Non disponible</td>
+      <td>Non disponible</td>
+      <td>0.10</td>
+      <td>Non disponible</td>
+      <td>Non disponible</td>
+      <td>0.01</td>
+    </tr>
+  
+    <tr>
+      <td>Tamboho Restaurant</td>
+      <td>Non disponible</td>
+      <td>0.08</td>
+      <td>0.50</td>
+      <td>Non disponible</td>
+      <td>Non disponible</td>
+      <td>0.08</td>
+    </tr>
+  
+    <tr>
+      <td>Les Petits Plats De Maman</td>
+      <td>Non disponible</td>
+      <td>Non disponible</td>
+      <td>0.70</td>
+      <td>Non disponible</td>
+      <td>Non disponible</td>
+      <td>0.10</td>
+    </tr>
+  
+    <tr>
+      <td>DIMA Hirondelle &quot;燕子&quot; chinese food</td>
+      <td>1.00</td>
+      <td>0.08</td>
+      <td>0.10</td>
+      <td>Non disponible</td>
+      <td>0.10</td>
+      <td>0.34</td>
+    </tr>
+  
+    <tr>
+      <td>SOHO Restaurant</td>
+      <td>Non disponible</td>
+      <td>0.04</td>
+      <td>0.80</td>
+      <td>Non disponible</td>
+      <td>Non disponible</td>
+      <td>0.12</td>
+    </tr>
+  
+    <tr>
+      <td>點都德</td>
+      <td>Non disponible</td>
+      <td>Non disponible</td>
+      <td>0.35</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.35</td>
+    </tr>
+  
+    <tr>
+      <td>Chez Maxime</td>
+      <td>Non disponible</td>
+      <td>0.04</td>
+      <td>0.10</td>
+      <td>Non disponible</td>
+      <td>Non disponible</td>
+      <td>0.02</td>
+    </tr>
+  
+    <tr>
+      <td>Sakamanga Hôtel</td>
+      <td>Non disponible</td>
+      <td>0.08</td>
+      <td>0.70</td>
+      <td>Non disponible</td>
+      <td>Non disponible</td>
+      <td>0.11</td>
+    </tr>
+  
+    <tr>
+      <td>Korea Barbeque</td>
+      <td>Non disponible</td>
+      <td>0.08</td>
+      <td>0.50</td>
+      <td>Non disponible</td>
+      <td>Non disponible</td>
+      <td>0.08</td>
+    </tr>
+  
+    <tr>
+      <td>Quick Delice</td>
+      <td>Non disponible</td>
+      <td>0.04</td>
+      <td>0.80</td>
+      <td>1.00</td>
+      <td>Non disponible</td>
+      <td>0.42</td>
+    </tr>
+  </tbody></table><script>
+  $(document).ready(function() {
+    $('#scoresTable').DataTable({
+      paging: true,
+      searching: true,
+      ordering: true,
+      pageLength: 10,
+      language: {
+        search: 'Rechercher:',
+        lengthMenu: 'Afficher _MENU_ entrées',
+        info: 'Affichage de _START_ à _END_ sur _TOTAL_ entrées',
+        paginate: {
+          first: 'Premier',
+          last: 'Dernier',
+          next: 'Suivant',
+          previous: 'Précédent'
+        }
+      }
+    });
+  });
+</script></body></html>
