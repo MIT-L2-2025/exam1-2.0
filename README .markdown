@@ -24,12 +24,7 @@ Ce projet utilise n8n pour analyser 41 restaurants à Antananarivo, identifier c
 - Navigateur web pour visualiser le HTML.
 
 ## Utilisation
-1. Importer `workflow.json` dans n8n.
+1. Importer `My_workflow_.json` dans n8n.
 2. Exécuter le workflow.
 3. Copier la valeur `html_output` depuis le nœud **Output HTML**.
 4. Sauvegarder comme `chinese_restaurants_antananarivo.html` et ouvrir dans un navigateur.
-
-## Notes
-- Le workflow utilise des données statiques pour éviter les API payantes.
-- Les images sont hébergées sur Unsplash (connexion Internet requise).
-- Exécuté dans un conteneur Docker, avec sortie manuelle du HTML.
