@@ -105,6 +105,9 @@ Basé sur la similarité avec les descriptions textuelles :
 | proba\_chinois | FLOAT   | Probabilité estimée par CLIP       |
 
 ---
+## Resultat du Classification 
+
+![proba](https://github.com/user-attachments/assets/534a463d-105a-4cd8-9c44-b23b8046d943)
 
 ## 🛠️ Technologies utilisées
 
