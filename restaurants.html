@@ -1,0 +1,2693 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <title>Restaurants Chinois à Antananarivo</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: monospace;
+            background-color: #ffffff;
+            color: #333;
+            line-height: 1.5;
+        }
+        h1 {
+            text-align: center;
+            font-size: 1.6rem;
+            margin: 1.5rem 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 10px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 12px;
+        }
+        .card {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.2rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        .info {
+            margin: 4px 0;
+            font-size: 0.9rem;
+        }
+        .label {
+            font-weight: bold;
+        }
+        .score {
+            margin: 8px 0;
+            padding: 4px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        .score-bar {
+            height: 12px;
+            margin-top: 5px;
+            background-color: #eee;
+            position: relative;
+        }
+        .score-fill {
+            height: 100%;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        .confiance-max .score-fill { background-color: #990000; width: var(--score-width); }
+        .confiance-élevée .score-fill { background-color: #996600; width: var(--score-width); }
+        .confiance-moyenne .score-fill { background-color: #666600; width: var(--score-width); }
+        .confiance-faible .score-fill { background-color: #666; width: var(--score-width); }
+        .restaurant-photo {
+            width: 100%;
+            height: auto;
+            max-height: 180px;
+            object-fit: cover;
+            margin: 8px 0;
+        }
+        .map {
+            height: 150px;
+            margin: 8px 0;
+        }
+        .details-btn {
+            background: none;
+            border: 1px solid #ddd;
+            padding: 3px 8px;
+            margin: 5px 0;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        .details-score {
+            display: none;
+            background: #f0f0f0;
+            padding: 8px;
+            margin: 5px 0;
+            font-size: 0.85rem;
+        }
+        .detail-item {
+            margin-bottom: 3px;
+        }
+        .filtres {
+            margin: 12px 0;
+            text-align: center;
+        }
+        .filtre-btn {
+            background: none;
+            border: 1px solid #ddd;
+            padding: 5px 10px;
+            margin: 0 4px;
+            cursor: pointer;
+            font-family: monospace;
+        }
+        .filtre-btn.active {
+            background: #eee;
+            border-color: #aaa;
+        }
+        .stats {
+            background: #f5f5f5;
+            padding: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        .stat-bars {
+            margin-top: 10px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .stat-bar-container {
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            display: inline-block;
+            width: 70px;
+            text-align: right;
+            margin-right: 10px;
+        }
+        .stat-bar {
+            display: inline-block;
+            width: calc(100% - 85px);
+            height: 12px;
+            background-color: #eee;
+            position: relative;
+        }
+        .stat-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+        }
+        .search-box {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .search-input {
+            padding: 5px 10px;
+            width: 60%;
+            background: #fff;
+            border: 1px solid #ddd;
+            font-family: monospace;
+        }
+        @media (max-width: 700px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .search-input {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Restaurants Chinois à Antananarivo</h1>
+    
+    <div class="stats">
+        <p>Total: <strong>104</strong> | 
+           Chinois confirmés: <strong>5</strong> |
+           Probablement chinois: <strong>20</strong></p>
+        <div class="stat-bars">
+            <div class="stat-bar-container">
+                <div class="stat-label">Confirmés</div>
+                <div class="stat-bar">
+                    <div class="stat-fill confiance-max" style="width: 4.807692307692308%"></div>
+                </div>
+            </div>
+            <div class="stat-bar-container">
+                <div class="stat-label">Probables</div>
+                <div class="stat-bar">
+                    <div class="stat-fill confiance-élevée" style="width: 19.230769230769234%"></div>
+                </div>
+            </div>
+            <div class="stat-bar-container">
+                <div class="stat-label">Possibles</div>
+                <div class="stat-bar">
+                    <div class="stat-fill confiance-moyenne" style="width: 25.961538461538463%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="search-box">
+        <input type="text" class="search-input" id="searchInput" placeholder="Rechercher...">
+    </div>
+    
+    <div class="filtres">
+        <button class="filtre-btn active" data-filtre="tous">Tous</button>
+        <button class="filtre-btn" data-filtre="confirme">Confirmés</button>
+        <button class="filtre-btn" data-filtre="probable">Probables</button>
+        <button class="filtre-btn" data-filtre="possible">Possibles</button>
+    </div>
+    
+    <div class="grid">
+
+        <div class="card" data-categorie="confirme" data-nom="Lotus Blanc Restaurant 荷花酒店" data-adresse="LOT II W 23 B, Antananarivo 101, Madagascar">
+            <h2>Lotus Blanc Restaurant 荷花酒店</h2>
+            <div class="info"><span class="label">Adresse:</span> LOT II W 23 B, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> Non disponible</div>
+            
+            <div class="score confiance-max">
+                Chinois confirmé (100/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 100%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(0)">
+                + Détails
+            </button>
+            <div id="details-0" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Nom contient 'lotus' (+5)</div><div class="detail-item">• Caractères chinois dans le nom (+25)</div><div class="detail-item">• Restaurant chinois confirmé: "lotus" (+40)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nrUpYxzE0X5TNlYJkYLr9_uuYGMlrvZu4ULEavAd89GH_Qga_nu-DK_EmlCrnbQ_cANforX7jMQWu-wuwRmoTmVMro-oGzE18lXwXEpSCEpb6Se9HlF5ydqQOQF2nWNpULguPHy=w122-h92-k-no" alt="Photo de Lotus Blanc Restaurant 荷花酒店" class="restaurant-photo" />
+            <div id="map-0" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="confirme" data-nom="Tianjie food (天街 中华料理)" data-adresse="3GVM+QG6, Antananarivo, Madagascar">
+            <h2>Tianjie food (天街 中华料理)</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GVM+QG6, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 29 283 82</div>
+            
+            <div class="score confiance-max">
+                Chinois confirmé (85/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 85%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(1)">
+                + Détails
+            </button>
+            <div id="details-1" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Caractères chinois dans le nom (+25)</div><div class="detail-item">• Localisation confirmée dans Analakely, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://via.placeholder.com/400x250?text=Pas+d%27image" alt="Photo de Tianjie food (天街 中华料理)" class="restaurant-photo" />
+            <div id="map-1" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="confirme" data-nom="中国餐馆" data-adresse="Madagascar, Antananarivo, Lalana Pastora Rabeony Hans">
+            <h2>中国餐馆</h2>
+            <div class="info"><span class="label">Adresse:</span> Madagascar, Antananarivo, Lalana Pastora Rabeony Hans</div>
+            <div class="info"><span class="label">Tél:</span> Non disponible</div>
+            
+            <div class="score confiance-max">
+                Chinois confirmé (85/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 85%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(2)">
+                + Détails
+            </button>
+            <div id="details-2" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Caractères chinois dans le nom (+25)</div><div class="detail-item">• Localisation confirmée dans Analakely, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://via.placeholder.com/400x250?text=Pas+d%27image" alt="Photo de 中国餐馆" class="restaurant-photo" />
+            <div id="map-2" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="confirme" data-nom="Restaurant Shanghai" data-adresse="4 Lalana Rainitovo, Antananarivo, Madagascar">
+            <h2>Restaurant Shanghai</h2>
+            <div class="info"><span class="label">Adresse:</span> 4 Lalana Rainitovo, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> Non disponible</div>
+            
+            <div class="score confiance-max">
+                Chinois confirmé (75/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 75%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(3)">
+                + Détails
+            </button>
+            <div id="details-3" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Nom contient le mot-clé majeur 'shanghai' (+15)</div><div class="detail-item">• Localisation confirmée dans Behoririka, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4npQ-ym2B7XijZBp1sArvZBmivhreEAWf3lhOGuf1PeP0qZZ0MvT6b6kyJOCdKcQERj00xriG-9QLPXR77DMXxWajNCh3NfAnI2_gM3rl5IUH9UbN6IPwP11Wmi92roDQ5SVgR8aIA=w163-h92-k-no" alt="Photo de Restaurant Shanghai" class="restaurant-photo" />
+            <div id="map-3" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="confirme" data-nom="Dragon rouge" data-adresse="3GXC+VQ8, Antananarivo, Madagascar">
+            <h2>Dragon rouge</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GXC+VQ8, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 13 058 26</div>
+            
+            <div class="score confiance-max">
+                Chinois confirmé (75/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 75%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(4)">
+                + Détails
+            </button>
+            <div id="details-4" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Nom contient le mot-clé majeur 'dragon' (+15)</div><div class="detail-item">• Localisation confirmée dans Tsaralalana, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://via.placeholder.com/400x250?text=Pas+d%27image" alt="Photo de Dragon rouge" class="restaurant-photo" />
+            <div id="map-4" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="probable" data-nom="凤城 Soleil" data-adresse="Lot IVK 89 bis Anosivavaka Ambohimanarina, Antananarivo 101, Madagascar">
+            <h2>凤城 Soleil</h2>
+            <div class="info"><span class="label">Adresse:</span> Lot IVK 89 bis Anosivavaka Ambohimanarina, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 33 11 336 28</div>
+            
+            <div class="score confiance-élevée">
+                Probablement chinois (65/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 65%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(5)">
+                + Détails
+            </button>
+            <div id="details-5" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Caractères chinois dans le nom (+25)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/p/AF1QipNV5IfdfmLcw6xZl_UC9xIgmSXKSFaCReLf3JDq=w415-h92-k-no" alt="Photo de 凤城 Soleil" class="restaurant-photo" />
+            <div id="map-5" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="probable" data-nom="吕府私房菜（KTV）" data-adresse="Madagascar, Antananarivo, AUTOREX, Amitie Fandian">
+            <h2>吕府私房菜（KTV）</h2>
+            <div class="info"><span class="label">Adresse:</span> Madagascar, Antananarivo, AUTOREX, Amitie Fandian</div>
+            <div class="info"><span class="label">Tél:</span> +261 38 82 066 66</div>
+            
+            <div class="score confiance-élevée">
+                Probablement chinois (65/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 65%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(6)">
+                + Détails
+            </button>
+            <div id="details-6" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Caractères chinois dans le nom (+25)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/p/AF1QipM07B6izo0ribTcOx106yL2JfPX64vAli2EbcDU=w84-h92-k-no" alt="Photo de 吕府私房菜（KTV）" class="restaurant-photo" />
+            <div id="map-6" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="probable" data-nom="佬湘好" data-adresse="Madagascar, Antanetib, 3, MG Antananarivo, 邮政编码: 105">
+            <h2>佬湘好</h2>
+            <div class="info"><span class="label">Adresse:</span> Madagascar, Antanetib, 3, MG Antananarivo, 邮政编码: 105</div>
+            <div class="info"><span class="label">Tél:</span> +261 38 52 066 66</div>
+            
+            <div class="score confiance-élevée">
+                Probablement chinois (65/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 65%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(7)">
+                + Détails
+            </button>
+            <div id="details-7" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Caractères chinois dans le nom (+25)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nrolgYuDDt-1Xqh5wivzSHe2fDPdzRSv22kEGLubj_cR2CHi_T7w1VLiKDg0WORmkzQxGg1WT4TqqWoXzRmtnybguVNd4SciUobZd4srvsrD-vGIT_TFtEsEXsOz3j8MEwyt0Ca=w92-h92-k-no" alt="Photo de 佬湘好" class="restaurant-photo" />
+            <div id="map-7" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="probable" data-nom="JiGongBao(雞宮煲)" data-adresse="5FPM+WRQ, Ambohijanahary-Ivato, Antananarivo, Madagascar">
+            <h2>JiGongBao(雞宮煲)</h2>
+            <div class="info"><span class="label">Adresse:</span> 5FPM+WRQ, Ambohijanahary-Ivato, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 38 53 887 04</div>
+            
+            <div class="score confiance-élevée">
+                Probablement chinois (65/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 65%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(8)">
+                + Détails
+            </button>
+            <div id="details-8" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Caractères chinois dans le nom (+25)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4noIQrJX_tpXsh9j4lJbIdRxlcZx8s57mQEfmN-b4obXc75cSjpNPAqEy3WUaXAUCmGDt364AC2jZcq0Mc_l16WbL8dcgC_WFiYlL3DZSzFADSG1xa327SunVWFl-uXmsQosyHNg=w163-h92-k-no" alt="Photo de JiGongBao(雞宮煲)" class="restaurant-photo" />
+            <div id="map-8" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="probable" data-nom="Hotel New Century" data-adresse="3GWF+J7P, Antananarivo 101, Madagascar">
+            <h2>Hotel New Century</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GWF+J7P, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 33 29 661 68</div>
+            
+            <div class="score confiance-élevée">
+                Probablement chinois (65/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 65%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(9)">
+                + Détails
+            </button>
+            <div id="details-9" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Nom contient 'new' (+5)</div><div class="detail-item">• Localisation confirmée dans Tsaralalana, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nqp-G4cQHik4NJULtfrQzDWbwaZp5nvDvKiKlS814Tfequ7YuHD8SKpovVbxt0vUn6Ly7z0LHPNuaIheU1ylVv1b4qNSu0jlSLQTgGcIJhxxiaR2Z_aiFAn9sbtSyB3XxAJP3x74Q=w122-h92-k-no" alt="Photo de Hotel New Century" class="restaurant-photo" />
+            <div id="map-9" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="probable" data-nom="吕府私房菜" data-adresse="Madagascar, Antananarivo">
+            <h2>吕府私房菜</h2>
+            <div class="info"><span class="label">Adresse:</span> Madagascar, Antananarivo</div>
+            <div class="info"><span class="label">Tél:</span> Non disponible</div>
+            
+            <div class="score confiance-élevée">
+                Probablement chinois (65/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 65%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(10)">
+                + Détails
+            </button>
+            <div id="details-10" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Caractères chinois dans le nom (+25)</div>
+            </div>
+            
+            <img src="https://via.placeholder.com/400x250?text=Pas+d%27image" alt="Photo de 吕府私房菜" class="restaurant-photo" />
+            <div id="map-10" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="probable" data-nom="Qing Qing Restaurant (青青餐館)" data-adresse="5F98+G62, Talatamaty, Madagascar">
+            <h2>Qing Qing Restaurant (青青餐館)</h2>
+            <div class="info"><span class="label">Adresse:</span> 5F98+G62, Talatamaty, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 69 261 62</div>
+            
+            <div class="score confiance-élevée">
+                Probablement chinois (65/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 65%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(11)">
+                + Détails
+            </button>
+            <div id="details-11" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Caractères chinois dans le nom (+25)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nqgyvC5pFvts3Gux00SCppZi0pVOn8IvuLDoQ8c5zXMPnyIGssgDgqGjOc6Y5Z-KtvpIdYk5OKY1FBp1WdhqOTPFHlagnhcqApgkajYuSoNc0K58UAshGpK3Xn8o0aLhl3FTGOi=w199-h92-k-no" alt="Photo de Qing Qing Restaurant (青青餐館)" class="restaurant-photo" />
+            <div id="map-11" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="probable" data-nom="Qing Qing Restaurant (青青餐館)" data-adresse="5F98+G62, Talatamaty, Madagascar">
+            <h2>Qing Qing Restaurant (青青餐館)</h2>
+            <div class="info"><span class="label">Adresse:</span> 5F98+G62, Talatamaty, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 69 261 62</div>
+            
+            <div class="score confiance-élevée">
+                Probablement chinois (65/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 65%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(12)">
+                + Détails
+            </button>
+            <div id="details-12" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Caractères chinois dans le nom (+25)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nqgyvC5pFvts3Gux00SCppZi0pVOn8IvuLDoQ8c5zXMPnyIGssgDgqGjOc6Y5Z-KtvpIdYk5OKY1FBp1WdhqOTPFHlagnhcqApgkajYuSoNc0K58UAshGpK3Xn8o0aLhl3FTGOi=w199-h92-k-no" alt="Photo de Qing Qing Restaurant (青青餐館)" class="restaurant-photo" />
+            <div id="map-12" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="probable" data-nom="點都德" data-adresse="Madagascar, Antananarivo">
+            <h2>點都德</h2>
+            <div class="info"><span class="label">Adresse:</span> Madagascar, Antananarivo</div>
+            <div class="info"><span class="label">Tél:</span> Non disponible</div>
+            
+            <div class="score confiance-élevée">
+                Probablement chinois (65/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 65%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(13)">
+                + Détails
+            </button>
+            <div id="details-13" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Caractères chinois dans le nom (+25)</div>
+            </div>
+            
+            <img src="https://via.placeholder.com/400x250?text=Pas+d%27image" alt="Photo de 點都德" class="restaurant-photo" />
+            <div id="map-13" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="probable" data-nom="Dun Huang" data-adresse="42 Arabe Andrinampoinimerina, Antananarivo 101, Madagascar">
+            <h2>Dun Huang</h2>
+            <div class="info"><span class="label">Adresse:</span> 42 Arabe Andrinampoinimerina, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> Non disponible</div>
+            
+            <div class="score confiance-élevée">
+                Probablement chinois (60/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 60%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(14)">
+                + Détails
+            </button>
+            <div id="details-14" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Localisation confirmée dans Behoririka, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4npfLz8Wly5Wa4UNEzcjTJKT-i4sj2k9KQOh5n_Kqp_Z68fGSSN7_Q23DRxiqOWeOJsyCrIPVHGXTjb65mNz8fVl0W6q9p7TAccpJZqJeR0urEKqORDagQjlZvGEL1Cu_1zVWN__=w163-h92-k-no" alt="Photo de Dun Huang" class="restaurant-photo" />
+            <div id="map-14" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="probable" data-nom="Wai Man" data-adresse="3GW6+VMX, Nord-Est-Coté parking, Antananarivo, Madagascar">
+            <h2>Wai Man</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GW6+VMX, Nord-Est-Coté parking, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> Non disponible</div>
+            
+            <div class="score confiance-élevée">
+                Probablement chinois (60/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 60%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(15)">
+                + Détails
+            </button>
+            <div id="details-15" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Localisation confirmée dans Tsaralalana, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://via.placeholder.com/400x250?text=Pas+d%27image" alt="Photo de Wai Man" class="restaurant-photo" />
+            <div id="map-15" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="probable" data-nom="Lakoziako" data-adresse="3GWF+4FP, Antananarivo, Madagascar">
+            <h2>Lakoziako</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GWF+4FP, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 79 061 61</div>
+            
+            <div class="score confiance-élevée">
+                Probablement chinois (60/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 60%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(16)">
+                + Détails
+            </button>
+            <div id="details-16" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Localisation confirmée dans Tsaralalana, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nr1-MjEr4xu4IFvHltxXjaFwHJzqa6Mtkl6NFw0ZkAOgbBmP1rEitCS4jhXC_H9wyGHkqLa3oKqfDFUu5B11fYkbuP03Bb8hoGcAA50frkgd3wdBuWraZVM4jDvyY-b2ESHLMdN=w80-h106-k-no" alt="Photo de Lakoziako" class="restaurant-photo" />
+            <div id="map-16" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="probable" data-nom="Quick Delice" data-adresse="3GRG+2RM, Antananarivo, Madagascar">
+            <h2>Quick Delice</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GRG+2RM, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> Non disponible</div>
+            
+            <div class="score confiance-élevée">
+                Probablement chinois (60/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 60%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(17)">
+                + Détails
+            </button>
+            <div id="details-17" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Localisation confirmée dans Behoririka, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nrpKASSDnyw8mx01lt-vYvJxlDJQm1vITuZ-dKfGvZiIrNaMXLJw0XAoulBCd1hRctGOvRuHFty-oSg3HNWm-Skf1AawbGgiwHoVCyouYrZSOz60ih_kYi4ijggSVnnJ5ly0EpU=w122-h92-k-no" alt="Photo de Quick Delice" class="restaurant-photo" />
+            <div id="map-17" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="probable" data-nom="TSANG-KAU" data-adresse="3GQC+R2Q, Arabe Victoire Rasoamanarivo, Antananarivo, Madagascar">
+            <h2>TSANG-KAU</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GQC+R2Q, Arabe Victoire Rasoamanarivo, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> Non disponible</div>
+            
+            <div class="score confiance-élevée">
+                Probablement chinois (60/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 60%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(18)">
+                + Détails
+            </button>
+            <div id="details-18" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Localisation confirmée dans Behoririka, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nroVUHWlfakl_6LXVqP-IROmfYQJLiiumyq-rvN089TnN2zpJVXX6TdfkGOLL6BsiztSEHsn_8783N7mUh-pO2vrgeFucsdzCS7lYQC6G7632VPbt0mz_pca09V1c85u5cekdgbpQ=w80-h106-k-no" alt="Photo de TSANG-KAU" class="restaurant-photo" />
+            <div id="map-18" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="probable" data-nom="National Center" data-adresse="3GWF+WWR, Antananarivo, Madagascar">
+            <h2>National Center</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GWF+WWR, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> Non disponible</div>
+            
+            <div class="score confiance-élevée">
+                Probablement chinois (60/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 60%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(19)">
+                + Détails
+            </button>
+            <div id="details-19" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Localisation confirmée dans Tsaralalana, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://via.placeholder.com/400x250?text=Pas+d%27image" alt="Photo de National Center" class="restaurant-photo" />
+            <div id="map-19" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="probable" data-nom="Restaurant Lo & Ma" data-adresse="4G38+MRH, Rue Ampanjaka Toera, Antananarivo, Madagascar">
+            <h2>Restaurant Lo & Ma</h2>
+            <div class="info"><span class="label">Adresse:</span> 4G38+MRH, Rue Ampanjaka Toera, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> Non disponible</div>
+            
+            <div class="score confiance-élevée">
+                Probablement chinois (60/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 60%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(20)">
+                + Détails
+            </button>
+            <div id="details-20" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Localisation confirmée dans Tsaralalana, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://via.placeholder.com/400x250?text=Pas+d%27image" alt="Photo de Restaurant Lo & Ma" class="restaurant-photo" />
+            <div id="map-20" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="probable" data-nom="Fortuna Tana" data-adresse="3GJ9+JC3, IMM, Antananarivo, Madagascar">
+            <h2>Fortuna Tana</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GJ9+JC3, IMM, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 38 63 366 66</div>
+            
+            <div class="score confiance-élevée">
+                Probablement chinois (60/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 60%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(21)">
+                + Détails
+            </button>
+            <div id="details-21" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Localisation confirmée dans Tsaralalana, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/p/AF1QipNCle2odNvBROX9WF0MOTaBH7XAF4vgG5lYSrhJ=w80-h106-k-no" alt="Photo de Fortuna Tana" class="restaurant-photo" />
+            <div id="map-21" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="probable" data-nom="Mareka Annexe" data-adresse="4G38+XQ4, Antananarivo, Madagascar">
+            <h2>Mareka Annexe</h2>
+            <div class="info"><span class="label">Adresse:</span> 4G38+XQ4, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> Non disponible</div>
+            
+            <div class="score confiance-élevée">
+                Probablement chinois (60/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 60%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(22)">
+                + Détails
+            </button>
+            <div id="details-22" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Localisation confirmée dans Tsaralalana, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://via.placeholder.com/400x250?text=Pas+d%27image" alt="Photo de Mareka Annexe" class="restaurant-photo" />
+            <div id="map-22" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="probable" data-nom="LA TABLE DE CHINE" data-adresse="3GJV+JRJ, Le Colisée, Antananarivo 101, Madagascar">
+            <h2>LA TABLE DE CHINE</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GJV+JRJ, Le Colisée, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 38 47 253 32</div>
+            
+            <div class="score confiance-élevée">
+                Probablement chinois (55/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 55%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(23)">
+                + Détails
+            </button>
+            <div id="details-23" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Nom contient le mot-clé majeur 'chine' (+15)</div>
+            </div>
+            
+            <img src="https://via.placeholder.com/400x250?text=Pas+d%27image" alt="Photo de LA TABLE DE CHINE" class="restaurant-photo" />
+            <div id="map-23" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="probable" data-nom="HONG KONG Restaurant - salon de The" data-adresse="Toyota, Lalana Doktera. Joseph Raseta, Maibahoaka Ivato Antananarivo IVATO, Antananarivo 105, Madagascar">
+            <h2>HONG KONG Restaurant - salon de The</h2>
+            <div class="info"><span class="label">Adresse:</span> Toyota, Lalana Doktera. Joseph Raseta, Maibahoaka Ivato Antananarivo IVATO, Antananarivo 105, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 38 68 509 77</div>
+            
+            <div class="score confiance-élevée">
+                Probablement chinois (50/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 50%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(24)">
+                + Détails
+            </button>
+            <div id="details-24" class="details-score">
+                <div class="detail-item">• Nom contient 'hong' (+5)</div><div class="detail-item">• Nom contient 'kong' (+5)</div><div class="detail-item">• Restaurant chinois confirmé: "hong kong" (+40)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/p/AF1QipMR8kLY4EHqmvIlOoaEvnzfUf8qY6f944ORYOF9=w147-h92-k-no" alt="Photo de HONG KONG Restaurant - salon de The" class="restaurant-photo" />
+            <div id="map-24" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="Restaurant L'EURASIE - Ankorondrano" data-adresse="Face à l'hôtel Ibis - Ankorondrano, Antananarivo 101, Madagascar">
+            <h2>Restaurant L'EURASIE - Ankorondrano</h2>
+            <div class="info"><span class="label">Adresse:</span> Face à l'hôtel Ibis - Ankorondrano, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 38 51 944 37</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (45/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 45%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(25)">
+                + Détails
+            </button>
+            <div id="details-25" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Nom contient 'asie' (+5)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nrBw_3QANYeR0UY51y3A6u6dsNXMDxu4tm7syzt17cyXyBaRkT9q5QjAVtF5_JPhjs4169bzJgKBi6A9W_DWVnZMSg7UojGWX4rzUvixk_hHag7RN8khUkOVTbXjzyUByMSxMr12A=w163-h92-k-no" alt="Photo de Restaurant L'EURASIE - Ankorondrano" class="restaurant-photo" />
+            <div id="map-25" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="Zen Garden" data-adresse="II M 38 F Androhibe Antananarivo Antananarivo, 101, Madagascar">
+            <h2>Zen Garden</h2>
+            <div class="info"><span class="label">Adresse:</span> II M 38 F Androhibe Antananarivo Antananarivo, 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 32 05 135 03</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (45/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 45%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(26)">
+                + Détails
+            </button>
+            <div id="details-26" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div><div class="detail-item">• Nom contient 'garden' (+5)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4npPblPYtNqgxMLaLXMFIf1aiYPQn9PBtQ7BEEluBBKwVM5WEKj1p8gUiS2WB24ZLV2BTqQp5Bqk7wZG-k5IUdcuitshIfqzaZzbhvnhGTO5MNN8nQFmrWVxOwfOeCzwcRut3Js8=w122-h92-k-no" alt="Photo de Zen Garden" class="restaurant-photo" />
+            <div id="map-26" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="Hirondelle "燕子" Chinese FOOD" data-adresse="Lalana Dama-Ntsoha Razatintsalama Jean-Baptiste, Antananarivo 101, Madagascar">
+            <h2>Hirondelle "燕子" Chinese FOOD</h2>
+            <div class="info"><span class="label">Adresse:</span> Lalana Dama-Ntsoha Razatintsalama Jean-Baptiste, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 11 166 78</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (45/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 45%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(27)">
+                + Détails
+            </button>
+            <div id="details-27" class="details-score">
+                <div class="detail-item">• Nom contient le mot-clé majeur 'chine' (+15)</div><div class="detail-item">• Nom contient 'chinese' (+5)</div><div class="detail-item">• Caractères chinois dans le nom (+25)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nqFaFCP-yeCuB1GmYyhEwh_5qq1joZFh3CsD8aXYmvLIOaw8B00Yge7EVi0ex9VCzpbB3shdAmNlorLtabtlxFiw-W4HyPxOSpFwWQtwEPSlhxBa72TvT8W9WxLzPKIHbxm4rFz=w122-h92-k-no" alt="Photo de Hirondelle "燕子" Chinese FOOD" class="restaurant-photo" />
+            <div id="map-27" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="逸香酒樓 Yixiang Restaurant" data-adresse="IVT 10, 4G48+V2P, Rue Docteur Joseph Raseta, Antananarivo, Madagascar">
+            <h2>逸香酒樓 Yixiang Restaurant</h2>
+            <div class="info"><span class="label">Adresse:</span> IVT 10, 4G48+V2P, Rue Docteur Joseph Raseta, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 57 088 88</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (45/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 45%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(28)">
+                + Détails
+            </button>
+            <div id="details-28" class="details-score">
+                <div class="detail-item">• Caractères chinois dans le nom (+25)</div><div class="detail-item">• Localisation confirmée dans Tsaralalana, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4noMFUueYLv4CMCdp9Oi4DzDifKYuj2t59drEeKVloyHrPM9Cq-LWDqZszw9B56eE7bMWhJyNA7YGAeswkSupAHt6cAeOl80vDdEY_PiMdl_B8ivfS6SzGpZd4JbS1A1Rut7j6_A=w122-h92-k-no" alt="Photo de 逸香酒樓 Yixiang Restaurant" class="restaurant-photo" />
+            <div id="map-28" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="DIMA Hirondelle "燕子" chinese food" data-adresse="4F5R+4P7, Andohatapenaka, Antananarivo, Madagascar">
+            <h2>DIMA Hirondelle "燕子" chinese food</h2>
+            <div class="info"><span class="label">Adresse:</span> 4F5R+4P7, Andohatapenaka, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 38 18 456 78</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (45/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 45%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(29)">
+                + Détails
+            </button>
+            <div id="details-29" class="details-score">
+                <div class="detail-item">• Nom contient le mot-clé majeur 'chine' (+15)</div><div class="detail-item">• Nom contient 'chinese' (+5)</div><div class="detail-item">• Caractères chinois dans le nom (+25)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nrOC4wG6XazozEwozBMllEEHcf_UeGL1EIX_CVWTtmwZB1YIo5cQesKV3QHxp6paFByvCuQOWk3cX1X-hbdd8mS_O9XoqfhqVKXlSpedQ3f58csdORMe2-hdGFOCV5nE1Zfyoqs=w163-h92-k-no" alt="Photo de DIMA Hirondelle "燕子" chinese food" class="restaurant-photo" />
+            <div id="map-29" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="Restaurant Fong Mei" data-adresse="4GHM+JMX, Rue Andriantsihoarana Ratsimbazafy, Antananarivo, Madagascar">
+            <h2>Restaurant Fong Mei</h2>
+            <div class="info"><span class="label">Adresse:</span> 4GHM+JMX, Rue Andriantsihoarana Ratsimbazafy, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 33 25 571 99</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (40/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 40%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(30)">
+                + Détails
+            </button>
+            <div id="details-30" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nolNHD5rKJWW9v3Ixql56BI20skMZ8WqVJ8cFGrkqB0vR7wxixjTL_YVNMoGp9POBhjJuzBIEw4-R6PuuZxXn6o3eNRRhwWwv6NBOqxH7zkKQqLWIU-t2QalpgrDBjquYwvWLqR=w189-h92-k-no" alt="Photo de Restaurant Fong Mei" class="restaurant-photo" />
+            <div id="map-30" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="Restaurant La Belle Ville" data-adresse="3GQP+WJP, Rue Razafindralombo Pierre, Antananarivo, Madagascar">
+            <h2>Restaurant La Belle Ville</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GQP+WJP, Rue Razafindralombo Pierre, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 03 244 36</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (40/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 40%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(31)">
+                + Détails
+            </button>
+            <div id="details-31" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nqMVa2ZDlEcu1-24RdDIIxGMaPiEPwR7V6Ud58uHx1cJOg7wUW97bIc95bxELMoaomLqfDYGEZ_YQn-edGlb6DWbmp0T91uwaGXij3n0yHtqP77GLSOouEpbvmpUfKxNVhEoqDq=w189-h92-k-no" alt="Photo de Restaurant La Belle Ville" class="restaurant-photo" />
+            <div id="map-31" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="Sam Voky" data-adresse="3GP8+GGF, Antananarivo, Madagascar">
+            <h2>Sam Voky</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GP8+GGF, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 18 685 38</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (40/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 40%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(32)">
+                + Détails
+            </button>
+            <div id="details-32" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nqUc8Sy9BHFgU7FN6oDY5xUoYxf_CkrggJJMDQX064ntoBlJzYR68gcFrOgkm-Gr4rXFnZFNcKK_opi32-4cfN-o8GrukNSNxlThax_tdmsSldyjMVQzxQMfBg9v3ouNDeP4MF3Fw=w122-h92-k-no" alt="Photo de Sam Voky" class="restaurant-photo" />
+            <div id="map-32" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="Restaurant Shi Fu" data-adresse="2G9W+VQ, Antananarivo, Madagascar">
+            <h2>Restaurant Shi Fu</h2>
+            <div class="info"><span class="label">Adresse:</span> 2G9W+VQ, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 51 483 56</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (40/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 40%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(33)">
+                + Détails
+            </button>
+            <div id="details-33" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nqP73oJx1egNVcJlIsDdKoWo5XL3RBXN0Ve7ajYkfb6ygaYM1RxfUYuOut0H9NCJoVIoLs_oLxwxTDVamnYhWeNzMCXXm4nm9zsVaUpYSZ7tD3E5kG-E4wY1h1WiHhelZ9GqoDQ=w163-h92-k-no" alt="Photo de Restaurant Shi Fu" class="restaurant-photo" />
+            <div id="map-33" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="Kaizen Restaurant" data-adresse="3GPR+F3J, Lalana Vvs, Antananarivo, Madagascar">
+            <h2>Kaizen Restaurant</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GPR+F3J, Lalana Vvs, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> Non disponible</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (40/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 40%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(34)">
+                + Détails
+            </button>
+            <div id="details-34" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4npiYiwk1WYCXA97t4daqgyAWislAgoJOrpuxRQHMIWZG5oc201kBCUBYZBfo3Bygloxhdzdu0VvRYMz8SJSQHaOvyRPhFCod1WKKmwrtw-3WH9RicAO3s7U9WvmwcIdXS567LsY=w80-h106-k-no" alt="Photo de Kaizen Restaurant" class="restaurant-photo" />
+            <div id="map-34" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="Restaurant Le Cantilène" data-adresse="3GQ4+RWM, Antananarivo, Madagascar">
+            <h2>Restaurant Le Cantilène</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GQ4+RWM, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 86 576 67</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (40/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 40%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(35)">
+                + Détails
+            </button>
+            <div id="details-35" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div>
+            </div>
+            
+            <img src="https://via.placeholder.com/400x250?text=Pas+d%27image" alt="Photo de Restaurant Le Cantilène" class="restaurant-photo" />
+            <div id="map-35" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="Restaurant Lai" data-adresse="3GQ4+RWG, Antananarivo, Madagascar">
+            <h2>Restaurant Lai</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GQ4+RWG, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 32 79 660 89</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (40/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 40%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(36)">
+                + Détails
+            </button>
+            <div id="details-36" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4noty2fvSDdiyk0ccnHxI9XFUv_RU4wakdqEQTrmJYkboDK2bp2do5B8CJN0dgpTz5Dau3Ts6adbk6YfPHARYZ20ZnTUSBf4l1vMkM8nbeNeazLll2rc26afNsw_uXKcZCNNEu5z=w163-h92-k-no" alt="Photo de Restaurant Lai" class="restaurant-photo" />
+            <div id="map-36" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="AZALEE MAMORY IVATO" data-adresse="k7, SODIAT Agence à Ivato, Lalana Dok. Joseph Raseta, Antananarivo, Madagascar">
+            <h2>AZALEE MAMORY IVATO</h2>
+            <div class="info"><span class="label">Adresse:</span> k7, SODIAT Agence à Ivato, Lalana Dok. Joseph Raseta, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 19 267 14</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (40/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 40%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(37)">
+                + Détails
+            </button>
+            <div id="details-37" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nryoddHTQFUer0AOVBgO4WOuVcH0rLLmOoyZORLkRWv63gXvrYvLFqYdlhMKc_nlHcD6DhP2oj7-Nj2PHHmOxlSiuM2F2bBWW9UsDg91HLKzEvLUfdt6tzH1eUjziP_vEDPfI8q=w122-h92-k-no" alt="Photo de AZALEE MAMORY IVATO" class="restaurant-photo" />
+            <div id="map-37" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="Sao Kuun" data-adresse="4FWH+CX7, Antananarivo, Madagascar">
+            <h2>Sao Kuun</h2>
+            <div class="info"><span class="label">Adresse:</span> 4FWH+CX7, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 38 52 403 86</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (40/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 40%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(38)">
+                + Détails
+            </button>
+            <div id="details-38" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nrnuxSf4E5iVMrHV2UrHgrIaMayx3FEL9q_OXtDlcLR0BsCEu47XwXQn3e4tMkBm2NliZ3LC4mDxCQBlv_4qMa-ZRJC-TNECvtXobfncOPaR3YuqQO0S-EeC0Fvk3QqYL5bHJH7ug=w80-h106-k-no" alt="Photo de Sao Kuun" class="restaurant-photo" />
+            <div id="map-38" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="La voie du Rossignol" data-adresse="3GXH+QVR, Antananarivo 101, Madagascar">
+            <h2>La voie du Rossignol</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GXH+QVR, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> Non disponible</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (40/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 40%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(39)">
+                + Détails
+            </button>
+            <div id="details-39" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div>
+            </div>
+            
+            <img src="https://via.placeholder.com/400x250?text=Pas+d%27image" alt="Photo de La voie du Rossignol" class="restaurant-photo" />
+            <div id="map-39" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="O'Gourmet" data-adresse="3H8H+2C9, Antananarivo, Madagascar">
+            <h2>O'Gourmet</h2>
+            <div class="info"><span class="label">Adresse:</span> 3H8H+2C9, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> Non disponible</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (40/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 40%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(40)">
+                + Détails
+            </button>
+            <div id="details-40" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nq1eoFOv-rUE20sqc41xyTWvZj5RuFaRtAfLw_eN2PUnOanY5tnO7SqWxvJmZZqZVtOPqS3Bwc6e23q1qyg5_n29fRmZHd1-ymTkQmuXhXSGVMM5sH-JH6mjyHiRwMuqyw2vEzV=w122-h92-k-no" alt="Photo de O'Gourmet" class="restaurant-photo" />
+            <div id="map-40" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="Le Pont Rouge" data-adresse="3GQ8+9RC, Lalana Razafy Abraham, Antananarivo, Madagascar">
+            <h2>Le Pont Rouge</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GQ8+9RC, Lalana Razafy Abraham, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 33 11 484 89</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (40/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 40%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(41)">
+                + Détails
+            </button>
+            <div id="details-41" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div>
+            </div>
+            
+            <img src="https://via.placeholder.com/400x250?text=Pas+d%27image" alt="Photo de Le Pont Rouge" class="restaurant-photo" />
+            <div id="map-41" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="Mille Goûts Ivato" data-adresse="5FVH+C6C, Antananarivo, Madagascar">
+            <h2>Mille Goûts Ivato</h2>
+            <div class="info"><span class="label">Adresse:</span> 5FVH+C6C, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 97 741 29</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (40/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 40%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(42)">
+                + Détails
+            </button>
+            <div id="details-42" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nqRVIhNXYEQftJ7vODyxnqwZJdxGeNq5nE51IzRAzUg-qo4kVnqZ9JoAUh6xZp_qocbT1o3V8xCWeC1rl7o1CmYPlZ4ZB0D4mDWfOm9Ary316bjTM0TqyLwNEvIMg_yVOLKxawj_A=w80-h142-k-no" alt="Photo de Mille Goûts Ivato" class="restaurant-photo" />
+            <div id="map-42" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="Restaurant Lo&Ma" data-adresse="III D 12, Antananarivo, Madagascar">
+            <h2>Restaurant Lo&Ma</h2>
+            <div class="info"><span class="label">Adresse:</span> III D 12, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 18 892 74</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (40/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 40%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(43)">
+                + Détails
+            </button>
+            <div id="details-43" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div>
+            </div>
+            
+            <img src="https://via.placeholder.com/400x250?text=Pas+d%27image" alt="Photo de Restaurant Lo&Ma" class="restaurant-photo" />
+            <div id="map-43" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="Fried Chicken" data-adresse="3F7H+79P, RN1, Antananarivo, Madagascar">
+            <h2>Fried Chicken</h2>
+            <div class="info"><span class="label">Adresse:</span> 3F7H+79P, RN1, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> Non disponible</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (40/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 40%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(44)">
+                + Détails
+            </button>
+            <div id="details-44" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div>
+            </div>
+            
+            <img src="https://via.placeholder.com/400x250?text=Pas+d%27image" alt="Photo de Fried Chicken" class="restaurant-photo" />
+            <div id="map-44" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="Bamboo | Le Restau |" data-adresse="3H72+4P3, Antananarivo, Madagascar">
+            <h2>Bamboo | Le Restau |</h2>
+            <div class="info"><span class="label">Adresse:</span> 3H72+4P3, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 38 35 206 81</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (40/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 40%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(45)">
+                + Détails
+            </button>
+            <div id="details-45" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div>
+            </div>
+            
+            <img src="https://via.placeholder.com/400x250?text=Pas+d%27image" alt="Photo de Bamboo | Le Restau |" class="restaurant-photo" />
+            <div id="map-45" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="Sweet Talk by Coq d'Or (Boutique)" data-adresse="4F5R+2V3, Andohatapenaka, Antananarivo, Madagascar">
+            <h2>Sweet Talk by Coq d'Or (Boutique)</h2>
+            <div class="info"><span class="label">Adresse:</span> 4F5R+2V3, Andohatapenaka, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 84 042 76</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (40/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 40%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(46)">
+                + Détails
+            </button>
+            <div id="details-46" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nqQ3A7OsmCn_1ikX0QaigNP6aY2BCsaM0oGqg2lq57g9oebbegvSORvsZJ7HONaEmvrmdZhyWI2PiLbmSZXlP68nbtOcDmhPRz9zonRnM2Zlx77CL5M7giDeiyGeViN8UoLzkf3XQ=w80-h106-k-no" alt="Photo de Sweet Talk by Coq d'Or (Boutique)" class="restaurant-photo" />
+            <div id="map-46" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="MON RESTO" data-adresse="Ambonisoa Arrêt Dokotera Itaosy, Madagascar">
+            <h2>MON RESTO</h2>
+            <div class="info"><span class="label">Adresse:</span> Ambonisoa Arrêt Dokotera Itaosy, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 38 92 132 40</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (40/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 40%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(47)">
+                + Détails
+            </button>
+            <div id="details-47" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div>
+            </div>
+            
+            <img src="https://via.placeholder.com/400x250?text=Pas+d%27image" alt="Photo de MON RESTO" class="restaurant-photo" />
+            <div id="map-47" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="Snack Ankadindratombo Chez dod1" data-adresse="3H64+H2X, Antananarivo, Madagascar">
+            <h2>Snack Ankadindratombo Chez dod1</h2>
+            <div class="info"><span class="label">Adresse:</span> 3H64+H2X, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 11 011 95</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (40/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 40%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(48)">
+                + Détails
+            </button>
+            <div id="details-48" class="details-score">
+                <div class="detail-item">• Type de la description officielle identifié comme "Chinese restaurant" (+40)</div>
+            </div>
+            
+            <img src="https://via.placeholder.com/400x250?text=Pas+d%27image" alt="Photo de Snack Ankadindratombo Chez dod1" class="restaurant-photo" />
+            <div id="map-48" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="O Loft Chinois" data-adresse="4G39+2J7, Antananarivo, Madagascar">
+            <h2>O Loft Chinois</h2>
+            <div class="info"><span class="label">Adresse:</span> 4G39+2J7, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> Non disponible</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (35/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 35%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(49)">
+                + Détails
+            </button>
+            <div id="details-49" class="details-score">
+                <div class="detail-item">• Nom contient le mot-clé majeur 'chinois' (+15)</div><div class="detail-item">• Localisation confirmée dans Tsaralalana, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nqk0vWrD_PANl-i2F9up-8S1e0_6olENFbp0EZt2OzxsRHEgMSA3FxmKbWz-xrrv_akwMU9Nc_YM_FojjhZzuYKOnLGf_BZyPNj-tSzvWy7KwKb3H1E16rW-07DXHMvq7O25RNm=w122-h92-k-no" alt="Photo de O Loft Chinois" class="restaurant-photo" />
+            <div id="map-49" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="l'Orient Asian Fusion Restaurant" data-adresse="Madagascar, Antananarivo, Lalana Rainandriamampandry, 邮政编码: 101">
+            <h2>l'Orient Asian Fusion Restaurant</h2>
+            <div class="info"><span class="label">Adresse:</span> Madagascar, Antananarivo, Lalana Rainandriamampandry, 邮政编码: 101</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 36 788 88</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (30/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 30%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(50)">
+                + Détails
+            </button>
+            <div id="details-50" class="details-score">
+                <div class="detail-item">• Nom contient 'asia' (+5)</div><div class="detail-item">• Nom contient 'asian' (+5)</div><div class="detail-item">• Localisation confirmée dans Behoririka, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/p/AF1QipMEtu4ta7YgG-CL3VT7miGqijPe1Too2f9jrSaP=w122-h92-k-no" alt="Photo de l'Orient Asian Fusion Restaurant" class="restaurant-photo" />
+            <div id="map-50" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="possible" data-nom="Les Petits Plats De Maman" data-adresse="Immeuble Art&jardin Antaninarenina, En face bio 33, Antananarivo 101, Madagascar">
+            <h2>Les Petits Plats De Maman</h2>
+            <div class="info"><span class="label">Adresse:</span> Immeuble Art&jardin Antaninarenina, En face bio 33, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 03 777 71</div>
+            
+            <div class="score confiance-moyenne">
+                Influence chinoise possible (30/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 30%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(51)">
+                + Détails
+            </button>
+            <div id="details-51" class="details-score">
+                <div class="detail-item">• Dans quartier à forte présence chinoise: 'antaninarenina' (+10)</div><div class="detail-item">• Localisation confirmée dans Behoririka, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/p/AF1QipML_3XWx4pWl7KXX0mCi6-o280LXBt1XRh1aTp8=w252-h92-k-no" alt="Photo de Les Petits Plats De Maman" class="restaurant-photo" />
+            <div id="map-51" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Au Coeur De Jade" data-adresse="Lalana Dok Razafindratandra, Antananarivo 101, Madagascar">
+            <h2>Au Coeur De Jade</h2>
+            <div class="info"><span class="label">Adresse:</span> Lalana Dok Razafindratandra, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 32 55 378 66</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (25/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 25%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(52)">
+                + Détails
+            </button>
+            <div id="details-52" class="details-score">
+                <div class="detail-item">• Nom contient 'jade' (+5)</div><div class="detail-item">• Localisation confirmée dans Analakely, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4no7KF7riw4IRTwXKzzUVKCoJ5QvVEOnZ5fEfT9wH3p-v3Orq1VmWOWVzZTjM6oTVITXxHTtTkQ-6V5sL27MuSjEpFQ8k-snPOK0cLkqe3bfJeif_Ol9HS08rb0NYKO631TObhfp=w122-h92-k-no" alt="Photo de Au Coeur De Jade" class="restaurant-photo" />
+            <div id="map-52" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Le Grand Tsang" data-adresse="3GVM+5JV, Antananarivo, Madagascar">
+            <h2>Le Grand Tsang</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GVM+5JV, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> Non disponible</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (20/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 20%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(53)">
+                + Détails
+            </button>
+            <div id="details-53" class="details-score">
+                <div class="detail-item">• Localisation confirmée dans Analakely, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nqYwbAIsceRTsJu9v-_P1T_9Oi0K7a7EH0LEk50qkk-LW3d3oAfzF63sxE70riGrxfGx4LpGYbPeu9B8GITMpzUtjRCCrEpYfD0pIz4t3L1AL7WCtxhkxWm3SlySCKZyMqo6DOn=w80-h106-k-no" alt="Photo de Le Grand Tsang" class="restaurant-photo" />
+            <div id="map-53" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Restaurant Le JASMIN" data-adresse="8 Rue Paul Dussac analamakelydohan Analakley, Madagascar">
+            <h2>Restaurant Le JASMIN</h2>
+            <div class="info"><span class="label">Adresse:</span> 8 Rue Paul Dussac analamakelydohan Analakley, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 62 413 75</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (20/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 20%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(54)">
+                + Détails
+            </button>
+            <div id="details-54" class="details-score">
+                <div class="detail-item">• Localisation confirmée dans Behoririka, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/p/AF1QipMHp_2LCbBD87BGTiFCNQTCW4EIJQVMrJaDI7Fc=w80-h104-k-no" alt="Photo de Restaurant Le JASMIN" class="restaurant-photo" />
+            <div id="map-54" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Restaurant Soleil d'Orient" data-adresse="3GPH+FF8, Antananarivo 101, Madagascar">
+            <h2>Restaurant Soleil d'Orient</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GPH+FF8, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> Non disponible</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (20/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 20%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(55)">
+                + Détails
+            </button>
+            <div id="details-55" class="details-score">
+                <div class="detail-item">• Localisation confirmée dans Behoririka, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nrEQvr5k47P-YpqYpnC4RQXXKuSbkA4TmRKoigmJPq5HB-l6q7e1js7ss6uFa-Oe2Lb7y6Q1yYpRnMP7nic9WQJwxkG6sDSwioO4qzteNScP0vOUkyjgk2GLBCV77w6F6HNqRxW=w122-h92-k-no" alt="Photo de Restaurant Soleil d'Orient" class="restaurant-photo" />
+            <div id="map-55" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="SOHO Restaurant" data-adresse="1st floor, Lalana S. Rahamefy, Antananarivo 101, Madagascar">
+            <h2>SOHO Restaurant</h2>
+            <div class="info"><span class="label">Adresse:</span> 1st floor, Lalana S. Rahamefy, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 20 22 694 05</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (20/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 20%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(56)">
+                + Détails
+            </button>
+            <div id="details-56" class="details-score">
+                <div class="detail-item">• Localisation confirmée dans Behoririka, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/p/AF1QipP0NwWxYN2Zcz61kalXkReJ2AnEmmjx_KfmNB4=w138-h92-k-no" alt="Photo de SOHO Restaurant" class="restaurant-photo" />
+            <div id="map-56" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Le Buffet du Jardin" data-adresse="Antananarivo 101, Madagascar">
+            <h2>Le Buffet du Jardin</h2>
+            <div class="info"><span class="label">Adresse:</span> Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 20 22 338 87</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (20/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 20%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(57)">
+                + Détails
+            </button>
+            <div id="details-57" class="details-score">
+                <div class="detail-item">• Localisation confirmée dans Behoririka, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nroIsAICosMeiGcSzoxsK3KWEKLiBvYnJGX4HI7I2GvW_wU-RVPav7czfbLgwMedDaFqXbwHVrxO6luair2NkajFfEFRGotYrxfb643HnLSMl0qY-5wbGow-UmWKXLrIpAcILfSGQ=w92-h92-k-no" alt="Photo de Le Buffet du Jardin" class="restaurant-photo" />
+            <div id="map-57" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Hotel Shangai" data-adresse="4 Lalana Rainitovo, Antananarivo, Madagascar">
+            <h2>Hotel Shangai</h2>
+            <div class="info"><span class="label">Adresse:</span> 4 Lalana Rainitovo, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 01 077 71</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (20/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 20%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(58)">
+                + Détails
+            </button>
+            <div id="details-58" class="details-score">
+                <div class="detail-item">• Localisation confirmée dans Behoririka, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-proxy/ALd4DhFm831xITY3yxrW-hSU_DnzpdWoEJRTvUFZP-MHugc4xU2RJ_WpJep03_c9rueOsF7QDesUNWzXcNscSikA7tMTQDsAWQZqSS8Jri1OJZfqiVpuUPC_FwIhlaVfWDxlcoahkvNs4OtQ4DXh_DGn-rDw9AI3ml-Gdti6r3ygiL00Q8XczErCDtii=w138-h92-k-no" alt="Photo de Hotel Shangai" class="restaurant-photo" />
+            <div id="map-58" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Bonjuk&Bibimbap Cafe Ankorondrano" data-adresse="Madagascar, Antananarivo">
+            <h2>Bonjuk&Bibimbap Cafe Ankorondrano</h2>
+            <div class="info"><span class="label">Adresse:</span> Madagascar, Antananarivo</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 19 705 00</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (20/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 20%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(59)">
+                + Détails
+            </button>
+            <div id="details-59" class="details-score">
+                <div class="detail-item">• Localisation confirmée dans Tsaralalana, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nrGODH5HrxDlOhjqcClMDCZQzGp39FR7TtZLE5Bcp6ZHgGSOip99M3L3YojwAbYDp-YeQUOy5cOQORpBvVOPdkzBhLM8rAbV9qzK1vjtBZoMaGtkAe0-S-v6QTDKqaEDfxWkI6zfg=w122-h92-k-no" alt="Photo de Bonjuk&Bibimbap Cafe Ankorondrano" class="restaurant-photo" />
+            <div id="map-59" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Haka Fy Authentic Restaurant" data-adresse="Jardin Historique d'Andohalo ANTANANARIVO, 101, Madagascar">
+            <h2>Haka Fy Authentic Restaurant</h2>
+            <div class="info"><span class="label">Adresse:</span> Jardin Historique d'Andohalo ANTANANARIVO, 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 07 162 06</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (20/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 20%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(60)">
+                + Détails
+            </button>
+            <div id="details-60" class="details-score">
+                <div class="detail-item">• Localisation confirmée dans Analakely, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4noIDXMflOF7tG2Aa2FZsWKTMCq-EKcev1tPxDVEscd8cG5P_tjLJkpoVqabgUDR_a7-zNDF9FwwI1UJ5J3qmBFiZVO6fOBLgvWiFpFLk_qN6LaVApcc_WKoXsHOGCTGBmvx7m8n=w80-h106-k-no" alt="Photo de Haka Fy Authentic Restaurant" class="restaurant-photo" />
+            <div id="map-60" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="L' Arrivage" data-adresse="4 chemins, Antananarivo, Madagascar">
+            <h2>L' Arrivage</h2>
+            <div class="info"><span class="label">Adresse:</span> 4 chemins, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 32 05 728 24</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (20/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 20%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(61)">
+                + Détails
+            </button>
+            <div id="details-61" class="details-score">
+                <div class="detail-item">• Localisation confirmée dans Behoririka, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nqjWXv7t01Yz0lJPw_-jbfh5GAX-e6GLu5ZhElnI0H8psNNuUZ55D02W6y8_OGKx0ZrCo900MCpf3OXy_8TBfLRLHLvNCTpjNKhlOF6emGP8Q8C4nSLIKxAgduFG25U61_iOnPqgw=w122-h92-k-no" alt="Photo de L' Arrivage" class="restaurant-photo" />
+            <div id="map-61" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Restaurant Le Paris-Delhi Indian fusion" data-adresse="3 Lalana Indira Gandhi, Antananarivo 101, Madagascar">
+            <h2>Restaurant Le Paris-Delhi Indian fusion</h2>
+            <div class="info"><span class="label">Adresse:</span> 3 Lalana Indira Gandhi, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 52 124 10</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (20/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 20%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(62)">
+                + Détails
+            </button>
+            <div id="details-62" class="details-score">
+                <div class="detail-item">• Localisation confirmée dans Behoririka, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4npWGQSGdZ9Cjjs0Wui6kghUVegIZB_625quGPMsHWG1X3UIRc4D5GypB7Rhq0t0kB6NwI1flj6ujnWmduS5fq7bn9Hakp1N1iAy3q4UPD1zoswYTevB8HtyvNjNS1-voI9ndFgbGA=w163-h92-k-no" alt="Photo de Restaurant Le Paris-Delhi Indian fusion" class="restaurant-photo" />
+            <div id="map-62" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Ethnika" data-adresse="3GRF+WR, Antananarivo 101, Madagascar">
+            <h2>Ethnika</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GRF+WR, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 08 040 60</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (20/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 20%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(63)">
+                + Détails
+            </button>
+            <div id="details-63" class="details-score">
+                <div class="detail-item">• Localisation confirmée dans Behoririka, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/p/AF1QipM15SLlVTdipAHER8hbzoGVqnXVaJSfIkpkeNtX=w122-h92-k-no" alt="Photo de Ethnika" class="restaurant-photo" />
+            <div id="map-63" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="TEND M Isoraka" data-adresse="3GPC+V6C, Antananarivo, Madagascar">
+            <h2>TEND M Isoraka</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GPC+V6C, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> Non disponible</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (20/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 20%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(64)">
+                + Détails
+            </button>
+            <div id="details-64" class="details-score">
+                <div class="detail-item">• Localisation confirmée dans Behoririka, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nqywl6dXd60-m5Kn9QPHv70xH0Cu_DKIIj_M_n8tnnMZB3d0Iz6RQk3mWTW1Tm7aj1kDp1lYQqkQX1mdR7TsFRwa1cdw3L4AgEwLgq5tOVC3UF4-eDrZZw8ttDsUDmav-ys0SfFRQ=w122-h92-k-no" alt="Photo de TEND M Isoraka" class="restaurant-photo" />
+            <div id="map-64" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Restaurant Shalimar" data-adresse="3GRC+XG9, Antananarivo, Madagascar">
+            <h2>Restaurant Shalimar</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GRC+XG9, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 20 22 260 70</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (20/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 20%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(65)">
+                + Détails
+            </button>
+            <div id="details-65" class="details-score">
+                <div class="detail-item">• Localisation confirmée dans Behoririka, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nrv1QCZFVWjYQJwSbFvwHJI-2mRg1uIMItK4VrDwv4Gz_SwHrn7Qhw-rwqbbUqXBnica69M8oJPNkQs4E5hBIDbM0xG9jEohQhjnQEijhGWZ6K1lliIixsYNwtTy1rNAR-xpJIv=w163-h92-k-no" alt="Photo de Restaurant Shalimar" class="restaurant-photo" />
+            <div id="map-65" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Palissandre Antananarivo" data-adresse="13 Lalana Andriandahifotsy, Antananarivo 101, Madagascar">
+            <h2>Palissandre Antananarivo</h2>
+            <div class="info"><span class="label">Adresse:</span> 13 Lalana Andriandahifotsy, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 20 97 605 60</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (20/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 20%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(66)">
+                + Détails
+            </button>
+            <div id="details-66" class="details-score">
+                <div class="detail-item">• Localisation confirmée dans Behoririka, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/p/AF1QipOO4jRCalIqAqvfm8ipuN__hiC-1BzAJVeENCT8=w165-h92-k-no" alt="Photo de Palissandre Antananarivo" class="restaurant-photo" />
+            <div id="map-66" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Radisson Blu Hotel, Antananarivo Waterfront" data-adresse="Zone Tana Waterfront, Antananarivo 101, Madagascar">
+            <h2>Radisson Blu Hotel, Antananarivo Waterfront</h2>
+            <div class="info"><span class="label">Adresse:</span> Zone Tana Waterfront, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 20 22 692 00</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (20/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 20%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(67)">
+                + Détails
+            </button>
+            <div id="details-67" class="details-score">
+                <div class="detail-item">• Localisation confirmée dans Tsaralalana, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/p/AF1QipMFBVLIIqcV6UDjNyTTuMrm_qjPA11YozClTOwU=w122-h92-k-no" alt="Photo de Radisson Blu Hotel, Antananarivo Waterfront" class="restaurant-photo" />
+            <div id="map-67" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Radisson Serviced Apartments Antananarivo City Center" data-adresse="Làlana Rahamefy Samuel, Antananarivo 101, Madagascar">
+            <h2>Radisson Serviced Apartments Antananarivo City Center</h2>
+            <div class="info"><span class="label">Adresse:</span> Làlana Rahamefy Samuel, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 20 22 694 00</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (20/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 20%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(68)">
+                + Détails
+            </button>
+            <div id="details-68" class="details-score">
+                <div class="detail-item">• Localisation confirmée dans Behoririka, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-proxy/ALd4DhGLuRecAVVPio83j0D_7JvOk3IHM6A5bo84TmX64zeTNjIRG21Hxr1xWXyx82CNY-V6_SAmeUAHkoIDkjCemTzLnSWlwvAye3h4CNHbgrWzVaKKOXQCH4eT-iAvbg1XhgZY-vG49zBoS7Bs9rvMujzFW_PkFCq3RBHC50itDEZCDU9SOqAoIm8=w122-h92-k-no" alt="Photo de Radisson Serviced Apartments Antananarivo City Center" class="restaurant-photo" />
+            <div id="map-68" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Nerone Ristorante Italiano (Madagascar)" data-adresse="Antananarivo 101, Madagascar">
+            <h2>Nerone Ristorante Italiano (Madagascar)</h2>
+            <div class="info"><span class="label">Adresse:</span> Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 67 859 46</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (20/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 20%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(69)">
+                + Détails
+            </button>
+            <div id="details-69" class="details-score">
+                <div class="detail-item">• Localisation confirmée dans Behoririka, zone à forte présence chinoise (+20)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nrzZKIM7ZGdfBjewvTi1RnGA8CEfIk1a4A_an2MJbykTcAxsO4oMpEYNZif4XSiKkJlG9EZRW5aGcJY2gwkX_RG6hKciz9C1fbUD7pzsXALY56XF4rj7MUzhg_Vty_NgxZ34bW7BA=w122-h92-k-no" alt="Photo de Nerone Ristorante Italiano (Madagascar)" class="restaurant-photo" />
+            <div id="map-69" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Grand Resto de Chine" data-adresse="Lalana Rasamuol Maurice, Antananarivo, Madagascar">
+            <h2>Grand Resto de Chine</h2>
+            <div class="info"><span class="label">Adresse:</span> Lalana Rasamuol Maurice, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 33 83 594 63</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (15/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 15%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(70)">
+                + Détails
+            </button>
+            <div id="details-70" class="details-score">
+                <div class="detail-item">• Nom contient le mot-clé majeur 'chine' (+15)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nqHN4KhuRUufM68Ng89YNk3DtdE5hsXus2Mq2hei4PCdG7QnDCpfE8xieflrkyZ_zBalLZy_4X-1r9WAXvf_V3OP_3OLD9N0qTGmuqYPpTUgcK5x9LwxkjXjs_He99xVtJQJuNq=w163-h92-k-no" alt="Photo de Grand Resto de Chine" class="restaurant-photo" />
+            <div id="map-70" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Dragon Royal Restaurant IVATO" data-adresse="5FQF+WHH, Antananarivo, Madagascar">
+            <h2>Dragon Royal Restaurant IVATO</h2>
+            <div class="info"><span class="label">Adresse:</span> 5FQF+WHH, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 38 12 579 79</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (15/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 15%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(71)">
+                + Détails
+            </button>
+            <div id="details-71" class="details-score">
+                <div class="detail-item">• Nom contient le mot-clé majeur 'dragon' (+15)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nqA3JeqHAor1xXOkm5Z12Rrp3ZZeJUscuX-OTXLOmhiBP0AnNHT9hdQLsRUUPvnUUtL9mn7r5A8bmixAYICAD2qQ6khCJrYlOKPsUMi9lAaDr4rpFmrwRBQCyPYxhePE2fBRgHclg=w80-h106-k-no" alt="Photo de Dragon Royal Restaurant IVATO" class="restaurant-photo" />
+            <div id="map-71" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="DRAGON ROYAL Restaurant" data-adresse="Rue Me Albertini, Antananarivo, Madagascar">
+            <h2>DRAGON ROYAL Restaurant</h2>
+            <div class="info"><span class="label">Adresse:</span> Rue Me Albertini, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 14 579 79</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (15/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 15%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(72)">
+                + Détails
+            </button>
+            <div id="details-72" class="details-score">
+                <div class="detail-item">• Nom contient le mot-clé majeur 'dragon' (+15)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/p/AF1QipNNtwqpbXDLmJAKPXh3EmxceGs__tEbYd_c9TK9=w122-h92-k-no" alt="Photo de DRAGON ROYAL Restaurant" class="restaurant-photo" />
+            <div id="map-72" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="ÔCG Ô Chinois Gourmand" data-adresse="3GQ8+CC2, Bloc commercial #7, Antananarivo 101, Madagascar">
+            <h2>ÔCG Ô Chinois Gourmand</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GQ8+CC2, Bloc commercial #7, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 36 105 80</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (15/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 15%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(73)">
+                + Détails
+            </button>
+            <div id="details-73" class="details-score">
+                <div class="detail-item">• Nom contient le mot-clé majeur 'chinois' (+15)</div>
+            </div>
+            
+            <img src="https://via.placeholder.com/400x250?text=Pas+d%27image" alt="Photo de ÔCG Ô Chinois Gourmand" class="restaurant-photo" />
+            <div id="map-73" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Korea Barbeque" data-adresse="Lot IVD 48F Ter Behoririka, Razanamaniraka, Madagascar">
+            <h2>Korea Barbeque</h2>
+            <div class="info"><span class="label">Adresse:</span> Lot IVD 48F Ter Behoririka, Razanamaniraka, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 33 07 033 07</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (10/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 10%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(74)">
+                + Détails
+            </button>
+            <div id="details-74" class="details-score">
+                <div class="detail-item">• Dans quartier à forte présence chinoise: 'behoririka' (+10)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4npKBOJ4yT_cZWrQfJFLd4IgRqg7oVL1XMjOaHCfZFdupIB2LcMiusPCfC9feTXOxaTdJ8udUkkfOm6JPxZGuZhw3l1UtAHOu2cvWqCc3yIlw9rLZeKz4BUgxaTrre9IaQdGcXU=w92-h92-k-no" alt="Photo de Korea Barbeque" class="restaurant-photo" />
+            <div id="map-74" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="La Fleur De Sel" data-adresse="Antananarivo, Madagascar">
+            <h2>La Fleur De Sel</h2>
+            <div class="info"><span class="label">Adresse:</span> Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 12 582 22</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(75)">
+                + Détails
+            </button>
+            <div id="details-75" class="details-score">
+                
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/p/AF1QipOQOGgQ0ObZ5MrCEVpNp5mKBTcQCh0GEM77h5YL=w158-h92-k-no" alt="Photo de La Fleur De Sel" class="restaurant-photo" />
+            <div id="map-75" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Le Grand Orient" data-adresse="Rue Andriantsihoarana Ratsimbazafy, Antananarivo 101, Madagascar">
+            <h2>Le Grand Orient</h2>
+            <div class="info"><span class="label">Adresse:</span> Rue Andriantsihoarana Ratsimbazafy, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 20 22 202 88</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(76)">
+                + Détails
+            </button>
+            <div id="details-76" class="details-score">
+                
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nr5KF4lML7jdA-wmjHcS-fjQniXjaBgEethm7JbVqAZo-A8nqpWA-udg8cVFGBC02pgFBZJgR8dg_r9jB4goytSeRXKAvsNMWWSsrQ6kSBRGUz0ebhdteoikRzjTwdKLg3bY9Cg=w163-h92-k-no" alt="Photo de Le Grand Orient" class="restaurant-photo" />
+            <div id="map-76" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="La Jonquille" data-adresse="Antananarivo 101, Madagascar">
+            <h2>La Jonquille</h2>
+            <div class="info"><span class="label">Adresse:</span> Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 20 22 206 37</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(77)">
+                + Détails
+            </button>
+            <div id="details-77" class="details-score">
+                
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nq9wUBBb4X_eZ0HUcuixB8K_7eeOV6_h7jeA9MFZk0gJwnN__gJn19wOmpYnkr7Jo-0JjRdJTAUu4_vIo32ptee3vHAKEVRsoitncj8zFBqImsD3LeDfQ7HdxOQ-xpmcu9qrjFA2A=w189-h92-k-no" alt="Photo de La Jonquille" class="restaurant-photo" />
+            <div id="map-77" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Arirang Restaurant" data-adresse="84 Villa les Hêtres, Madagascar">
+            <h2>Arirang Restaurant</h2>
+            <div class="info"><span class="label">Adresse:</span> 84 Villa les Hêtres, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 32 04 889 97</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(78)">
+                + Détails
+            </button>
+            <div id="details-78" class="details-score">
+                
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4npOnVdVOVLcNelSKYr50iSVBVqzXi7cP-4P1r4Sou-JGPfCT0-QOw01EZI7mEqM6nqUd5wv11EawKBRPuAkZuQYj3_6dv_0GiBbn4GVQ1UbQ5GP3yf1wX5RIySMXH2bGXyqzqBdnQ=w122-h92-k-no" alt="Photo de Arirang Restaurant" class="restaurant-photo" />
+            <div id="map-78" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Laï tsock" data-adresse="3GQP+4JW, Rue Razafindralombo Pierre, Antananarivo, Madagascar">
+            <h2>Laï tsock</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GQP+4JW, Rue Razafindralombo Pierre, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 30 357 57</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(79)">
+                + Détails
+            </button>
+            <div id="details-79" class="details-score">
+                
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4noSvDmifY6fO9m1tqcR4_Wg7k79iqFcHU-Fyd7z9llbrCz710KOkrZ-EnAVIeo52ymUz1LeBS5vthfHbu_-Kehf-Sv9ho8lzPp5qif7GBxDDjwKNsp7Kd2GdAgjB7sjRpwPFYN6Mw=w163-h92-k-no" alt="Photo de Laï tsock" class="restaurant-photo" />
+            <div id="map-79" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Fleuve Rouge (Red River)" data-adresse="Rue Lietna Andriamaromanana Albert, Antananarivo 101, Madagascar">
+            <h2>Fleuve Rouge (Red River)</h2>
+            <div class="info"><span class="label">Adresse:</span> Rue Lietna Andriamaromanana Albert, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 33 15 158 58</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(80)">
+                + Détails
+            </button>
+            <div id="details-80" class="details-score">
+                
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4non_MDpB-tKag8so1lcMSv_iOfsy68_pA13AHc33-H1zrwmOKBRC-sQ_L2-o3w-CPByTSPsDAumeS-cnm1LvLFj2vdw1ebogktF6c0IXqhrlYiHQbzNzljzcY6LoySozIPewQUlyQ=w122-h92-k-no" alt="Photo de Fleuve Rouge (Red River)" class="restaurant-photo" />
+            <div id="map-80" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Hotel Seoul & Restaurant" data-adresse="Rue Rakoto Frah, Antananarivo, Madagascar">
+            <h2>Hotel Seoul & Restaurant</h2>
+            <div class="info"><span class="label">Adresse:</span> Rue Rakoto Frah, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 33 14 955 27</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(81)">
+                + Détails
+            </button>
+            <div id="details-81" class="details-score">
+                
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nqP4sn0ZOjgncLegQhkPq3IPX2OqszrxT4h7OwhIdUXp1tWuZxkbVttaOte31Xfcn55IU0UkX9LRDl2bEOvHKCMTGet3aFSYkS0ZknVqj7kdON93IEh2VC05Zs9EMpprDhKlYJK0A=w92-h92-k-no" alt="Photo de Hotel Seoul & Restaurant" class="restaurant-photo" />
+            <div id="map-81" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Chez Maxime" data-adresse="4GH9+V9C, Antananarivo, Madagascar">
+            <h2>Chez Maxime</h2>
+            <div class="info"><span class="label">Adresse:</span> 4GH9+V9C, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 38 38 431 51</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(82)">
+                + Détails
+            </button>
+            <div id="details-82" class="details-score">
+                
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4noBRiowh33UrSrDq62nGV8SEDd7p0EqzD40-kFE3pmfloj14KdHlSI0PEXYspRXgcXJSAvScnvG2oyfRSwIYcNP7oi7PjlCEG08UBVnGG9PhCx056Oj8m-aiolCmIXvQ1xF9mVLXQ=w80-h106-k-no" alt="Photo de Chez Maxime" class="restaurant-photo" />
+            <div id="map-82" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Café de NanShan 南山咖啡西餐厅" data-adresse="101, Antananarivo 101, Madagascar">
+            <h2>Café de NanShan 南山咖啡西餐厅</h2>
+            <div class="info"><span class="label">Adresse:</span> 101, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 38 83 744 18</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(83)">
+                + Détails
+            </button>
+            <div id="details-83" class="details-score">
+                <div class="detail-item">• Restaurant exclu car clairement non-chinois (-100)</div>
+            </div>
+            
+            <img src="https://via.placeholder.com/400x250?text=Pas+d%27image" alt="Photo de Café de NanShan 南山咖啡西餐厅" class="restaurant-photo" />
+            <div id="map-83" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Tamboho Restaurant" data-adresse="Zone Tana Waterfront, Antananarivo 101, Madagascar">
+            <h2>Tamboho Restaurant</h2>
+            <div class="info"><span class="label">Adresse:</span> Zone Tana Waterfront, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 20 22 693 06</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(84)">
+                + Détails
+            </button>
+            <div id="details-84" class="details-score">
+                
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/p/AF1QipPA5yBAe14GTt6kJO3eZdmE2pBJ9nYXSk0u0rLP=w138-h92-k-no" alt="Photo de Tamboho Restaurant" class="restaurant-photo" />
+            <div id="map-84" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Sakamanga Hôtel" data-adresse="Lot IBK7bis, Lalana Adrianary Ratianarivo,, Ampasamadinika, Madagascar, 101, Madagascar">
+            <h2>Sakamanga Hôtel</h2>
+            <div class="info"><span class="label">Adresse:</span> Lot IBK7bis, Lalana Adrianary Ratianarivo,, Ampasamadinika, Madagascar, 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 20 22 358 09</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(85)">
+                + Détails
+            </button>
+            <div id="details-85" class="details-score">
+                <div class="detail-item">• Restaurant exclu car clairement non-chinois (-100)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/p/AF1QipPoaHMBjmiv36TThNGHagA0NvZujRTh4kkpBYZC=w136-h92-k-no" alt="Photo de Sakamanga Hôtel" class="restaurant-photo" />
+            <div id="map-85" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Le Petit Bouchon" data-adresse="Lot IVM, 122L Rue Agosthino Neto, Antananarivo 101, Madagascar">
+            <h2>Le Petit Bouchon</h2>
+            <div class="info"><span class="label">Adresse:</span> Lot IVM, 122L Rue Agosthino Neto, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 38 92 329 02</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(86)">
+                + Détails
+            </button>
+            <div id="details-86" class="details-score">
+                
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4npHhbJIKpbgY6BocydRYEX-DMHdkE39IjfrRs4oORE5r6knmKJbz3ESf77zNGdXL_obGcci78FpAIFoOQU5FNjC4V7fLjXzfmvaqiw-AD_HGQPk2cbKlomeXs5ot9dF1olCnOs=w80-h106-k-no" alt="Photo de Le Petit Bouchon" class="restaurant-photo" />
+            <div id="map-86" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Restaurant Little India" data-adresse="3GR9+RC9, Antananarivo 101, Madagascar">
+            <h2>Restaurant Little India</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GR9+RC9, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 33 42 971 70</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(87)">
+                + Détails
+            </button>
+            <div id="details-87" class="details-score">
+                
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4notS7h-jQROJdgpqZcsBAk-J9FgWHkLDBobU6xbgus1_B6wrFeEoO6DffPKmPua2bv2_hyKjIYmowDS4eoCSYcnyAo6MSlJGAkjgghuAiutqfZgPME0expYaEDZfTieZBoMxprC=w163-h92-k-no" alt="Photo de Restaurant Little India" class="restaurant-photo" />
+            <div id="map-87" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Marais Restaurant Madagascar" data-adresse="Routes des Hydrocarbures, Immeuble Atrium Ankorondrano, 5è étage Antananarivo, 101, Madagascar">
+            <h2>Marais Restaurant Madagascar</h2>
+            <div class="info"><span class="label">Adresse:</span> Routes des Hydrocarbures, Immeuble Atrium Ankorondrano, 5è étage Antananarivo, 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 50 674 97</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(88)">
+                + Détails
+            </button>
+            <div id="details-88" class="details-score">
+                
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/p/AF1QipNahcO_fwBc8r60PWl7XI8iMZ4WK2plN73NXHUz=w163-h92-k-no" alt="Photo de Marais Restaurant Madagascar" class="restaurant-photo" />
+            <div id="map-88" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Phô Resto Ivato" data-adresse="5FC8+54W, Ivato (en face Raseta, Talatamaty, Madagascar">
+            <h2>Phô Resto Ivato</h2>
+            <div class="info"><span class="label">Adresse:</span> 5FC8+54W, Ivato (en face Raseta, Talatamaty, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 99 999 88</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(89)">
+                + Détails
+            </button>
+            <div id="details-89" class="details-score">
+                
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/p/AF1QipPylvfyEJLvFiN4N9Jc4jC9lcZYfqDFuCWTbO7M=w92-h92-k-no" alt="Photo de Phô Resto Ivato" class="restaurant-photo" />
+            <div id="map-89" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Sakamanga Restaurant" data-adresse="3GRC+PFF, Antananarivo, Madagascar">
+            <h2>Sakamanga Restaurant</h2>
+            <div class="info"><span class="label">Adresse:</span> 3GRC+PFF, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> Non disponible</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(90)">
+                + Détails
+            </button>
+            <div id="details-90" class="details-score">
+                <div class="detail-item">• Restaurant exclu car clairement non-chinois (-100)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nqKldvQjLZu5BikxQ89P_6V1heGsvlq99MpGwLMfAo1ZyOnSKbGqCzgpZ3PT-DHnqIrvlLVUIQlK29iF5dN6CgTcq5OwiZ_0s5wR2mexVwhU2QvBQR6-Z1kJ0eYp6nPSrdoHzU=w92-h92-k-no" alt="Photo de Sakamanga Restaurant" class="restaurant-photo" />
+            <div id="map-90" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Islander Food" data-adresse="112 A, Antanetibe, Ivato, Madagascar">
+            <h2>Islander Food</h2>
+            <div class="info"><span class="label">Adresse:</span> 112 A, Antanetibe, Ivato, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 32 43 299 47</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(91)">
+                + Détails
+            </button>
+            <div id="details-91" class="details-score">
+                
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nqj8yQq36l3OEuOkXbCbNiTv8x35bnpEyG1UjeundSfiIAMGQ676va7i7xqvA1_fcvw1V6mKBJhZbl0fBA-7X6j-G1QjzLY3wixSnym97AhmxXtVGKN4TTKOO9RpQ5QDCREw-E2ww=w122-h92-k-no" alt="Photo de Islander Food" class="restaurant-photo" />
+            <div id="map-91" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Naïla RESTAURANT" data-adresse="5FRC+FQ6, Antananarivo, Madagascar">
+            <h2>Naïla RESTAURANT</h2>
+            <div class="info"><span class="label">Adresse:</span> 5FRC+FQ6, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 32 47 062 80</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(92)">
+                + Détails
+            </button>
+            <div id="details-92" class="details-score">
+                
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nrNtKs8IRPmpR2JdaEMHK5LjR2Dfg_B9LeBXk0hxygWvcnlGuT8d-dpL_-NYzT1gTJTXPX1DQBXQAIfmtAteTaoh053q206QM5XT84z90zIJTbHWyX4RaU2vg2ioK6A-T0Ksstx=w189-h92-k-no" alt="Photo de Naïla RESTAURANT" class="restaurant-photo" />
+            <div id="map-92" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Pousse Pousse Du Raphia" data-adresse="5FH8+Q85, Lalana Dok. Joseph Raseta, Antananarivo, Madagascar">
+            <h2>Pousse Pousse Du Raphia</h2>
+            <div class="info"><span class="label">Adresse:</span> 5FH8+Q85, Lalana Dok. Joseph Raseta, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> Non disponible</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(93)">
+                + Détails
+            </button>
+            <div id="details-93" class="details-score">
+                
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4npC9XxAWDSrHagPwLsofjsJJNXwFSMgg-EYPLhd75ZRPnIkmDiy88OKeskqIXSKqzndWCwxi4C5TskW1dzVoBcCTqy-Q_gvpQIYq7gCshmSO24ap3-luGbIHqmu5OIiVvB-4tvz=w200-h92-k-no" alt="Photo de Pousse Pousse Du Raphia" class="restaurant-photo" />
+            <div id="map-93" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Le Palanquin Restaurant" data-adresse="SODIAT Agence à Ivato, Lalana Dok. Joseph Raseta, Antananarivo 105, Madagascar">
+            <h2>Le Palanquin Restaurant</h2>
+            <div class="info"><span class="label">Adresse:</span> SODIAT Agence à Ivato, Lalana Dok. Joseph Raseta, Antananarivo 105, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 33 11 438 08</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(94)">
+                + Détails
+            </button>
+            <div id="details-94" class="details-score">
+                
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nrn7xeYSwCKtAuNptDprN79iW0D9U9Z7bWQFedaYO6KOa8XWmWVhOl4Y0ohbX_rSs568La4aCq_SNW0J1fgtaZiarc3OTm-G25S-NPUxrGeaUXarllFBhlrNwb2lhm2PR0QNjM=w122-h92-k-no" alt="Photo de Le Palanquin Restaurant" class="restaurant-photo" />
+            <div id="map-94" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Radisson Hotel Tamboho Waterfront Antananarivo" data-adresse="Zone Tana Waterfront, Antananarivo 101, Madagascar">
+            <h2>Radisson Hotel Tamboho Waterfront Antananarivo</h2>
+            <div class="info"><span class="label">Adresse:</span> Zone Tana Waterfront, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 20 22 693 00</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(95)">
+                + Détails
+            </button>
+            <div id="details-95" class="details-score">
+                
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/p/AF1QipMB1hCgWSBEUVE5n7H9NkrHmQE5Yy8OODaDCpLk=w138-h92-k-no" alt="Photo de Radisson Hotel Tamboho Waterfront Antananarivo" class="restaurant-photo" />
+            <div id="map-95" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="CASTELLO MOTEL Madagascar" data-adresse="Lot IVW 3D Anosizato Antananarivo, 101, Madagascar">
+            <h2>CASTELLO MOTEL Madagascar</h2>
+            <div class="info"><span class="label">Adresse:</span> Lot IVW 3D Anosizato Antananarivo, 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 33 11 612 08</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(96)">
+                + Détails
+            </button>
+            <div id="details-96" class="details-score">
+                
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-proxy/ALd4DhEXf_JEYGfvKBCnXiWOTlBvkZ-ym8WT0A6EDL6zLIZJb77I1F_PDbNH0I6-WA1KAKaYcXpROhxdC9J623SYqNw4XFllUrU41RcpeveVzdUyuK49vaQJRYK6m5SaR4aK5j6JHN5n1n1Sg2ujo7B9Y_Uf4B8CXzF3tPwsGayeYOwD1sXljCEFRHof=w80-h125-k-no" alt="Photo de CASTELLO MOTEL Madagascar" class="restaurant-photo" />
+            <div id="map-96" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="L'Oriental Ivandry" data-adresse="Ivandry Ambodivoanjo lot II I 161, Antananarivo 101, Madagascar">
+            <h2>L'Oriental Ivandry</h2>
+            <div class="info"><span class="label">Adresse:</span> Ivandry Ambodivoanjo lot II I 161, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 42 111 11</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(97)">
+                + Détails
+            </button>
+            <div id="details-97" class="details-score">
+                
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nrUK4tR23GPgQanL4nq7wBBJiX_lMlhJu3yCi0GE0ckAxP8xs5MpAZRHB8AHYAxVvzym_7ZpdPnzhpz9B1sUW6XHpA3gl5OVN6jySf0qWI9ng55DJAem4jXbURZa_TrTm0kT1JMew=w122-h92-k-no" alt="Photo de L'Oriental Ivandry" class="restaurant-photo" />
+            <div id="map-97" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Hotel Restaurant La Varangue" data-adresse="Antananarivo 101, Madagascar">
+            <h2>Hotel Restaurant La Varangue</h2>
+            <div class="info"><span class="label">Adresse:</span> Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 20 22 251 74</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(98)">
+                + Détails
+            </button>
+            <div id="details-98" class="details-score">
+                <div class="detail-item">• Restaurant exclu car clairement non-chinois (-100)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-proxy/ALd4DhEIBmaEKBzXZMZ9P60zIhetT-qVmwYHI7Y4WGINd23VdPAdHb2aJfnzcvPQpJygNeGq8FAa9-XuzMpD6lba764Z5d5nRmX7OK3_d3lUIDi-fZYI4olZk4mmsNXXPwZAKu2kBxilrmzJOVOUaY9-zcbBADmZAwZfHBVG8sputYbi5XcAbYN4WSln7A=w138-h92-k-no" alt="Photo de Hotel Restaurant La Varangue" class="restaurant-photo" />
+            <div id="map-98" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Relais des Plateaux Hotel & Spa" data-adresse="Lot 66 B, Talatamaty, Madagascar">
+            <h2>Relais des Plateaux Hotel & Spa</h2>
+            <div class="info"><span class="label">Adresse:</span> Lot 66 B, Talatamaty, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 32 05 678 93</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(99)">
+                + Détails
+            </button>
+            <div id="details-99" class="details-score">
+                
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-proxy/ALd4DhHIPz5REDgWhxhX04WuXfY1iLoEaLyYbhLvX-4Pm6WzGuGrjfRKbwhjLuW9bvJXMn8kXnh4mrsjJRDoRVK9rF81yUBDnWuEcjJ4OX2eUzuGr4777zXTqL-FYQgJvkeFkWF-U7Y7dNSnEM2aOCYKj7A_898Nai2bE3JtuFqyIkCGPFb-RuZ3jZqB7w=w161-h92-k-no" alt="Photo de Relais des Plateaux Hotel & Spa" class="restaurant-photo" />
+            <div id="map-99" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Les 3 Métis" data-adresse="Antananarivo, Madagascar">
+            <h2>Les 3 Métis</h2>
+            <div class="info"><span class="label">Adresse:</span> Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 33 05 520 20</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(100)">
+                + Détails
+            </button>
+            <div id="details-100" class="details-score">
+                
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-proxy/ALd4DhEK9wsf-MiM2dFUMYmY0reotNRRI9oo2aTk5jPe3ccMu-xtMgbvY-N5DGwpniy23JFvAwky0sNyPBQi8cVtW0svRm1v7RvDAl8cTt5ZEKqADDOiUXj5hvS5vhX07yImXygiNH3v-_tGdZqm2554Wuq1j_yHuu7zbk8-Y2pV6iasfY94Z9UnGMUe=w138-h92-k-no" alt="Photo de Les 3 Métis" class="restaurant-photo" />
+            <div id="map-100" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Hotel Carlton" data-adresse="Rue Pierre Stibbe- Anosy 959, Antananarivo 101, Madagascar">
+            <h2>Hotel Carlton</h2>
+            <div class="info"><span class="label">Adresse:</span> Rue Pierre Stibbe- Anosy 959, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 20 22 260 60</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(101)">
+                + Détails
+            </button>
+            <div id="details-101" class="details-score">
+                
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-proxy/ALd4DhFrONOdgxjNjddWB7hC5sRaZ_dw7Xmj0r1k_UptXo2-0px4_G_UGRWE63CvjLj02sG7Uk0jCo3ss8Xj6ReWJSRQGiGEirEVVxvOZO1JN-tMCUMLn9GOZ4sG5oSsFbqt_bNt00K86VbVJ1_djcMSGLlJMd8H_6L_4fG7AasF_N1qZCOpPTiW46HSKw=w124-h92-k-no" alt="Photo de Hotel Carlton" class="restaurant-photo" />
+            <div id="map-101" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Le Carnivore - Restaurant Bar Lounge" data-adresse="66 Rue Ratsimilaho Ambatonakanga, Lalana Ranavalona III, Antananarivo 101, Madagascar">
+            <h2>Le Carnivore - Restaurant Bar Lounge</h2>
+            <div class="info"><span class="label">Adresse:</span> 66 Rue Ratsimilaho Ambatonakanga, Lalana Ranavalona III, Antananarivo 101, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 05 125 04</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(102)">
+                + Détails
+            </button>
+            <div id="details-102" class="details-score">
+                <div class="detail-item">• Restaurant exclu car clairement non-chinois (-100)</div>
+            </div>
+            
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nri6Gyc1WmoTihtdvdix4Jja7544imDFxftIPoGuTlrutajETghboMKnnGU8YxcACeY0g1CFO9QR7o_xp6q2eNCmpb-m-6aAiLzbKekqHPjkVY8ETdqWUM42jBnudFtRJUMOCJNGA=w122-h92-k-no" alt="Photo de Le Carnivore - Restaurant Bar Lounge" class="restaurant-photo" />
+            <div id="map-102" class="map"></div>
+        </div>
+    
+        <div class="card" data-categorie="autre" data-nom="Restaurant Maka'ai" data-adresse="4G6X+3H3, Rte Nanisana, Antananarivo, Madagascar">
+            <h2>Restaurant Maka'ai</h2>
+            <div class="info"><span class="label">Adresse:</span> 4G6X+3H3, Rte Nanisana, Antananarivo, Madagascar</div>
+            <div class="info"><span class="label">Tél:</span> +261 34 28 766 95</div>
+            
+            <div class="score confiance-faible">
+                Peu probable (0/100)
+                <div class="score-bar">
+                    <div class="score-fill" style="--score-width: 0%"></div>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails(103)">
+                + Détails
+            </button>
+            <div id="details-103" class="details-score">
+                
+            </div>
+            
+            <img src="https://via.placeholder.com/400x250?text=Pas+d%27image" alt="Photo de Restaurant Maka'ai" class="restaurant-photo" />
+            <div id="map-103" class="map"></div>
+        </div>
+    
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const mapData = [{"lat":-18.9134037,"lng":47.537774399999996,"nom":"Lotus Blanc Restaurant 荷花酒店","adresse":"LOT II W 23 B, Antananarivo 101, Madagascar"},{"lat":-18.9054453,"lng":47.533779599999995,"nom":"Tianjie food (天街 中华料理)","adresse":"3GVM+QG6, Antananarivo, Madagascar"},{"lat":-18.907339999999998,"lng":47.5342068,"nom":"中国餐馆","adresse":"Madagascar, Antananarivo, Lalana Pastora Rabeony Hans"},{"lat":-18.9088825,"lng":47.5238114,"nom":"Restaurant Shanghai","adresse":"4 Lalana Rainitovo, Antananarivo, Madagascar"},{"lat":-18.9003469,"lng":47.5219587,"nom":"Dragon rouge","adresse":"3GXC+VQ8, Antananarivo, Madagascar"},{"lat":-18.8729457,"lng":47.507969499999994,"nom":"凤城 Soleil","adresse":"Lot IVK 89 bis Anosivavaka Ambohimanarina, Antananarivo 101, Madagascar"},{"lat":-18.910683199999998,"lng":47.503318,"nom":"吕府私房菜（KTV）","adresse":"Madagascar, Antananarivo, AUTOREX, Amitie Fandian"},{"lat":-18.835245699999998,"lng":47.4647325,"nom":"佬湘好","adresse":"Madagascar, Antanetib, 3, MG Antananarivo, 邮政编码: 105"},{"lat":-18.8135221,"lng":47.4848558,"nom":"JiGongBao(雞宮煲)","adresse":"5FPM+WRQ, Ambohijanahary-Ivato, Antananarivo, Madagascar"},{"lat":-18.903412499999998,"lng":47.523203099999996,"nom":"Hotel New Century","adresse":"3GWF+J7P, Antananarivo 101, Madagascar"},{"lat":-18.9106979,"lng":47.503316399999996,"nom":"吕府私房菜","adresse":"Madagascar, Antananarivo"},{"lat":-18.831281699999998,"lng":47.4655546,"nom":"Qing Qing Restaurant (青青餐館)","adresse":"5F98+G62, Talatamaty, Madagascar"},{"lat":-18.831281699999998,"lng":47.4655546,"nom":"Qing Qing Restaurant (青青餐館)","adresse":"5F98+G62, Talatamaty, Madagascar"},{"lat":-18.9184607,"lng":47.5211293,"nom":"點都德","adresse":"Madagascar, Antananarivo"},{"lat":-18.905614,"lng":47.524070699999996,"nom":"Dun Huang","adresse":"42 Arabe Andrinampoinimerina, Antananarivo 101, Madagascar"},{"lat":-18.902773099999997,"lng":47.5117251,"nom":"Wai Man","adresse":"3GW6+VMX, Nord-Est-Coté parking, Antananarivo, Madagascar"},{"lat":-18.904658299999998,"lng":47.5236933,"nom":"Lakoziako","adresse":"3GWF+4FP, Antananarivo, Madagascar"},{"lat":-18.9099024,"lng":47.527038499999996,"nom":"Quick Delice","adresse":"3GRG+2RM, Antananarivo, Madagascar"},{"lat":-18.9104137,"lng":47.5201174,"nom":"TSANG-KAU","adresse":"3GQC+R2Q, Arabe Victoire Rasoamanarivo, Antananarivo, Madagascar"},{"lat":-18.902637,"lng":47.524754599999994,"nom":"National Center","adresse":"3GWF+WWR, Antananarivo, Madagascar"},{"lat":-18.8958056,"lng":47.517106899999995,"nom":"Restaurant Lo & Ma","adresse":"4G38+MRH, Rue Ampanjaka Toera, Antananarivo, Madagascar"},{"lat":-18.8987591,"lng":47.5210699,"nom":"Fortuna Tana","adresse":"3GJ9+JC3, IMM, Antananarivo, Madagascar"},{"lat":-18.8951027,"lng":47.5167942,"nom":"Mareka Annexe","adresse":"4G38+XQ4, Antananarivo, Madagascar"},{"lat":-18.9184218,"lng":47.5445059,"nom":"LA TABLE DE CHINE","adresse":"3GJV+JRJ, Le Colisée, Antananarivo 101, Madagascar"},{"lat":-18.830986199999998,"lng":47.465352599999996,"nom":"HONG KONG Restaurant - salon de The","adresse":"Toyota, Lalana Doktera. Joseph Raseta, Maibahoaka Ivato Antananarivo IVATO, Antananarivo 105, Madagascar"},{"lat":-18.878854999999998,"lng":47.521268299999996,"nom":"Restaurant L'EURASIE - Ankorondrano","adresse":"Face à l'hôtel Ibis - Ankorondrano, Antananarivo 101, Madagascar"},{"lat":-18.865723499999998,"lng":47.5428709,"nom":"Zen Garden","adresse":"II M 38 F Androhibe Antananarivo Antananarivo, 101, Madagascar"},{"lat":-18.9174137,"lng":47.5366284,"nom":"Hirondelle \"燕子\" Chinese FOOD","adresse":"Lalana Dama-Ntsoha Razatintsalama Jean-Baptiste, Antananarivo 101, Madagascar"},{"lat":-18.892812499999998,"lng":47.5150625,"nom":"逸香酒樓 Yixiang Restaurant","adresse":"IVT 10, 4G48+V2P, Rue Docteur Joseph Raseta, Antananarivo, Madagascar"},{"lat":-18.8922222,"lng":47.4919444,"nom":"DIMA Hirondelle \"燕子\" chinese food","adresse":"4F5R+4P7, Andohatapenaka, Antananarivo, Madagascar"},{"lat":-18.870893799999997,"lng":47.5342498,"nom":"Restaurant Fong Mei","adresse":"4GHM+JMX, Rue Andriantsihoarana Ratsimbazafy, Antananarivo, Madagascar"},{"lat":-18.9101641,"lng":47.5365779,"nom":"Restaurant La Belle Ville","adresse":"3GQP+WJP, Rue Razafindralombo Pierre, Antananarivo, Madagascar"},{"lat":-18.9136965,"lng":47.5162832,"nom":"Sam Voky","adresse":"3GP8+GGF, Antananarivo, Madagascar"},{"lat":-18.989533899999998,"lng":47.5392912,"nom":"Restaurant Shi Fu","adresse":"2G9W+VQ, Antananarivo, Madagascar"},{"lat":-18.9137837,"lng":47.5401532,"nom":"Kaizen Restaurant","adresse":"3GPR+F3J, Lalana Vvs, Antananarivo, Madagascar"},{"lat":-18.9104223,"lng":47.507293499999996,"nom":"Restaurant Le Cantilène","adresse":"3GQ4+RWM, Antananarivo, Madagascar"},{"lat":-18.9104281,"lng":47.5073277,"nom":"Restaurant Lai","adresse":"3GQ4+RWG, Antananarivo, Madagascar"},{"lat":-18.806805699999998,"lng":47.4746307,"nom":"AZALEE MAMORY IVATO","adresse":"k7, SODIAT Agence à Ivato, Lalana Dok. Joseph Raseta, Antananarivo, Madagascar"},{"lat":-18.8539721,"lng":47.4799192,"nom":"Sao Kuun","adresse":"4FWH+CX7, Antananarivo, Madagascar"},{"lat":-18.900512499999998,"lng":47.5296406,"nom":"La voie du Rossignol","adresse":"3GXH+QVR, Antananarivo 101, Madagascar"},{"lat":-18.9349626,"lng":47.5786224,"nom":"O'Gourmet","adresse":"3H8H+2C9, Antananarivo, Madagascar"},{"lat":-18.9115644,"lng":47.5170171,"nom":"Le Pont Rouge","adresse":"3GQ8+9RC, Lalana Razafy Abraham, Antananarivo, Madagascar"},{"lat":-18.8064432,"lng":47.4780154,"nom":"Mille Goûts Ivato","adresse":"5FVH+C6C, Antananarivo, Madagascar"},{"lat":-18.8791902,"lng":47.5079055,"nom":"Restaurant Lo&Ma","adresse":"III D 12, Antananarivo, Madagascar"},{"lat":-18.9367756,"lng":47.478449999999995,"nom":"Fried Chicken","adresse":"3F7H+79P, RN1, Antananarivo, Madagascar"},{"lat":-18.937231699999998,"lng":47.551808199999996,"nom":"Bamboo | Le Restau |","adresse":"3H72+4P3, Antananarivo, Madagascar"},{"lat":-18.8924861,"lng":47.492177299999994,"nom":"Sweet Talk by Coq d'Or (Boutique)","adresse":"4F5R+2V3, Andohatapenaka, Antananarivo, Madagascar"},{"lat":-18.912877299999998,"lng":47.485425899999996,"nom":"MON RESTO","adresse":"Ambonisoa Arrêt Dokotera Itaosy, Madagascar"},{"lat":-18.9385193,"lng":47.555096,"nom":"Snack Ankadindratombo Chez dod1","adresse":"3H64+H2X, Antananarivo, Madagascar"},{"lat":-18.8974503,"lng":47.5190589,"nom":"O Loft Chinois","adresse":"4G39+2J7, Antananarivo, Madagascar"},{"lat":-18.907249399999998,"lng":47.5280373,"nom":"l'Orient Asian Fusion Restaurant","adresse":"Madagascar, Antananarivo, Lalana Rainandriamampandry, 邮政编码: 101"},{"lat":-18.9107144,"lng":47.522312799999995,"nom":"Les Petits Plats De Maman","adresse":"Immeuble Art&jardin Antaninarenina, En face bio 33, Antananarivo 101, Madagascar"},{"lat":-18.9170536,"lng":47.527269999999994,"nom":"Au Coeur De Jade","adresse":"Lalana Dok Razafindratandra, Antananarivo 101, Madagascar"},{"lat":-18.9070166,"lng":47.5340499,"nom":"Le Grand Tsang","adresse":"3GVM+5JV, Antananarivo, Madagascar"},{"lat":-18.9103791,"lng":47.526700899999994,"nom":"Restaurant Le JASMIN","adresse":"8 Rue Paul Dussac analamakelydohan Analakley, Madagascar"},{"lat":-18.913850699999998,"lng":47.5288341,"nom":"Restaurant Soleil d'Orient","adresse":"3GPH+FF8, Antananarivo 101, Madagascar"},{"lat":-18.912232799999998,"lng":47.5281814,"nom":"SOHO Restaurant","adresse":"1st floor, Lalana S. Rahamefy, Antananarivo 101, Madagascar"},{"lat":-18.9102228,"lng":47.5253829,"nom":"Le Buffet du Jardin","adresse":"Antananarivo 101, Madagascar"},{"lat":-18.9088638,"lng":47.523859099999996,"nom":"Hotel Shangai","adresse":"4 Lalana Rainitovo, Antananarivo, Madagascar"},{"lat":-18.8943475,"lng":47.5229442,"nom":"Bonjuk&Bibimbap Cafe Ankorondrano","adresse":"Madagascar, Antananarivo"},{"lat":-18.918690899999998,"lng":47.5323476,"nom":"Haka Fy Authentic Restaurant","adresse":"Jardin Historique d'Andohalo ANTANANARIVO, 101, Madagascar"},{"lat":-18.9069105,"lng":47.5280084,"nom":"L' Arrivage","adresse":"4 chemins, Antananarivo, Madagascar"},{"lat":-18.905983799999998,"lng":47.522620499999995,"nom":"Restaurant Le Paris-Delhi Indian fusion","adresse":"3 Lalana Indira Gandhi, Antananarivo 101, Madagascar"},{"lat":-18.9079229,"lng":47.524605099999995,"nom":"Ethnika","adresse":"3GRF+WR, Antananarivo 101, Madagascar"},{"lat":-18.9128117,"lng":47.520517999999996,"nom":"TEND M Isoraka","adresse":"3GPC+V6C, Antananarivo, Madagascar"},{"lat":-18.907598699999998,"lng":47.521371699999996,"nom":"Restaurant Shalimar","adresse":"3GRC+XG9, Antananarivo, Madagascar"},{"lat":-18.907612699999998,"lng":47.528067199999995,"nom":"Palissandre Antananarivo","adresse":"13 Lalana Andriandahifotsy, Antananarivo 101, Madagascar"},{"lat":-18.8902563,"lng":47.5246662,"nom":"Radisson Blu Hotel, Antananarivo Waterfront","adresse":"Zone Tana Waterfront, Antananarivo 101, Madagascar"},{"lat":-18.9116656,"lng":47.5281355,"nom":"Radisson Serviced Apartments Antananarivo City Center","adresse":"Làlana Rahamefy Samuel, Antananarivo 101, Madagascar"},{"lat":-18.911913,"lng":47.5267547,"nom":"Nerone Ristorante Italiano (Madagascar)","adresse":"Antananarivo 101, Madagascar"},{"lat":-18.9141849,"lng":47.5384142,"nom":"Grand Resto de Chine","adresse":"Lalana Rasamuol Maurice, Antananarivo, Madagascar"},{"lat":-18.8101926,"lng":47.4739989,"nom":"Dragon Royal Restaurant IVATO","adresse":"5FQF+WHH, Antananarivo, Madagascar"},{"lat":-18.8945895,"lng":47.5283391,"nom":"DRAGON ROYAL Restaurant","adresse":"Rue Me Albertini, Antananarivo, Madagascar"},{"lat":-18.911479099999998,"lng":47.5160096,"nom":"ÔCG Ô Chinois Gourmand","adresse":"3GQ8+CC2, Bloc commercial #7, Antananarivo 101, Madagascar"},{"lat":-18.9018744,"lng":47.5269188,"nom":"Korea Barbeque","adresse":"Lot IVD 48F Ter Behoririka, Razanamaniraka, Madagascar"},{"lat":-18.8715948,"lng":47.5426065,"nom":"La Fleur De Sel","adresse":"Antananarivo, Madagascar"},{"lat":-18.8698272,"lng":47.5317034,"nom":"Le Grand Orient","adresse":"Rue Andriantsihoarana Ratsimbazafy, Antananarivo 101, Madagascar"},{"lat":-18.909325799999998,"lng":47.536889599999995,"nom":"La Jonquille","adresse":"Antananarivo 101, Madagascar"},{"lat":-18.8655445,"lng":47.5304389,"nom":"Arirang Restaurant","adresse":"84 Villa les Hêtres, Madagascar"},{"lat":-18.912186,"lng":47.5365843,"nom":"Laï tsock","adresse":"3GQP+4JW, Rue Razafindralombo Pierre, Antananarivo, Madagascar"},{"lat":-18.9036898,"lng":47.5289256,"nom":"Fleuve Rouge (Red River)","adresse":"Rue Lietna Andriamaromanana Albert, Antananarivo 101, Madagascar"},{"lat":-18.9187387,"lng":47.508212,"nom":"Hotel Seoul & Restaurant","adresse":"Rue Rakoto Frah, Antananarivo, Madagascar"},{"lat":-18.8703096,"lng":47.5183823,"nom":"Chez Maxime","adresse":"4GH9+V9C, Antananarivo, Madagascar"},{"lat":-18.901388999999998,"lng":47.5255873,"nom":"Café de NanShan 南山咖啡西餐厅","adresse":"101, Antananarivo 101, Madagascar"},{"lat":-18.8916634,"lng":47.5267732,"nom":"Tamboho Restaurant","adresse":"Zone Tana Waterfront, Antananarivo 101, Madagascar"},{"lat":-18.9082962,"lng":47.5211967,"nom":"Sakamanga Hôtel","adresse":"Lot IBK7bis, Lalana Adrianary Ratianarivo,, Ampasamadinika, Madagascar, 101, Madagascar"},{"lat":-18.9118866,"lng":47.508617099999995,"nom":"Le Petit Bouchon","adresse":"Lot IVM, 122L Rue Agosthino Neto, Antananarivo 101, Madagascar"},{"lat":-18.9079625,"lng":47.518609399999995,"nom":"Restaurant Little India","adresse":"3GR9+RC9, Antananarivo 101, Madagascar"},{"lat":-18.8873568,"lng":47.523541099999996,"nom":"Marais Restaurant Madagascar","adresse":"Routes des Hydrocarbures, Immeuble Atrium Ankorondrano, 5è étage Antananarivo, 101, Madagascar"},{"lat":-18.8295603,"lng":47.4653504,"nom":"Phô Resto Ivato","adresse":"5FC8+54W, Ivato (en face Raseta, Talatamaty, Madagascar"},{"lat":-18.908188499999998,"lng":47.5211699,"nom":"Sakamanga Restaurant","adresse":"3GRC+PFF, Antananarivo, Madagascar"},{"lat":-18.8323489,"lng":47.4669342,"nom":"Islander Food","adresse":"112 A, Antanetibe, Ivato, Madagascar"},{"lat":-18.8088296,"lng":47.4718927,"nom":"Naïla RESTAURANT","adresse":"5FRC+FQ6, Antananarivo, Madagascar"},{"lat":-18.820622699999998,"lng":47.465851,"nom":"Pousse Pousse Du Raphia","adresse":"5FH8+Q85, Lalana Dok. Joseph Raseta, Antananarivo, Madagascar"},{"lat":-18.827140099999998,"lng":47.4646483,"nom":"Le Palanquin Restaurant","adresse":"SODIAT Agence à Ivato, Lalana Dok. Joseph Raseta, Antananarivo 105, Madagascar"},{"lat":-18.8917996,"lng":47.525941599999996,"nom":"Radisson Hotel Tamboho Waterfront Antananarivo","adresse":"Zone Tana Waterfront, Antananarivo 101, Madagascar"},{"lat":-18.940104599999998,"lng":47.5014615,"nom":"CASTELLO MOTEL Madagascar","adresse":"Lot IVW 3D Anosizato Antananarivo, 101, Madagascar"},{"lat":-18.8710837,"lng":47.531609499999995,"nom":"L'Oriental Ivandry","adresse":"Ivandry Ambodivoanjo lot II I 161, Antananarivo 101, Madagascar"},{"lat":-18.911886199999998,"lng":47.525039299999996,"nom":"Hotel Restaurant La Varangue","adresse":"Antananarivo 101, Madagascar"},{"lat":-18.834139999999998,"lng":47.463051799999995,"nom":"Relais des Plateaux Hotel & Spa","adresse":"Lot 66 B, Talatamaty, Madagascar"},{"lat":-18.9033317,"lng":47.529440799999996,"nom":"Les 3 Métis","adresse":"Antananarivo, Madagascar"},{"lat":-18.9148484,"lng":47.5178489,"nom":"Hotel Carlton","adresse":"Rue Pierre Stibbe- Anosy 959, Antananarivo 101, Madagascar"},{"lat":-18.9132425,"lng":47.527188699999996,"nom":"Le Carnivore - Restaurant Bar Lounge","adresse":"66 Rue Ratsimilaho Ambatonakanga, Lalana Ranavalona III, Antananarivo 101, Madagascar"},{"lat":-18.8898615,"lng":47.5489229,"nom":"Restaurant Maka'ai","adresse":"4G6X+3H3, Rte Nanisana, Antananarivo, Madagascar"}];
+
+    function initMaps() {
+        mapData.forEach((data, index) => {
+            if (!isNaN(data.lat) && !isNaN(data.lng)) {
+                const map = L.map('map-' + index).setView([data.lat, data.lng], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap'
+                }).addTo(map);
+                
+                L.marker([data.lat, data.lng])
+                    .addTo(map)
+                    .bindPopup(`<b>${data.nom}</b><br>${data.adresse}`);
+            } else {
+                document.getElementById('map-' + index).style.display = 'none';
+            }
+        });
+    }
+
+    function toggleDetails(index) {
+        const details = document.getElementById('details-' + index);
+        details.style.display = details.style.display === 'none' ? 'block' : 'none';
+    }
+    
+    // Filtres
+    document.querySelectorAll('.filtre-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Retirer la classe active de tous les boutons
+            document.querySelectorAll('.filtre-btn').forEach(b => b.classList.remove('active'));
+            // Ajouter la classe active au bouton cliqué
+            this.classList.add('active');
+            
+            const filtre = this.dataset.filtre;
+            const cards = document.querySelectorAll('.card');
+            
+            cards.forEach(card => {
+                if (filtre === 'tous') {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = card.dataset.categorie === filtre ? 'block' : 'none';
+                }
+            });
+        });
+    });
+    
+    // Fonction de recherche
+    document.getElementById('searchInput').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const cards = document.querySelectorAll('.card');
+        
+        cards.forEach(card => {
+            const nom = card.dataset.nom.toLowerCase();
+            const adresse = card.dataset.adresse.toLowerCase();
+            
+            if (nom.includes(searchTerm) || adresse.includes(searchTerm)) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        
+        // Si une recherche est active, désactiver les filtres
+        if (searchTerm) {
+            document.querySelectorAll('.filtre-btn').forEach(b => b.classList.remove('active'));
+        } else {
+            // Réactiver le filtre actif
+            const activeFilter = document.querySelector('.filtre-btn.active');
+            if (activeFilter) {
+                activeFilter.click();
+            } else {
+                document.querySelector('[data-filtre="tous"]').click();
+            }
+        }
+    });
+
+    window.addEventListener('load', initMaps);
+</script>
+</body>
+</html>
