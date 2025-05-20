@@ -1,0 +1,174 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -940,
+        200
+      ],
+      "id": "78687d9b-a259-46f5-85cb-782bc5188005",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search.json?engine=google_maps&q=restaurant+chinois+antananarivo",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "restaurant chinois Antananarivo"
+            },
+            {
+              "name": "api_key",
+              "value": "2821382bbc2230e657586de1f75afa6c3bd0b31197a13854d807a55c3719b996"
+            },
+            {
+              "name": "start",
+              "value": "={{$json[\"start\"]}}"
+            },
+            {
+              "name": "ll",
+              "value": " @-18.8792,47.5079,15z"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -500,
+        200
+      ],
+      "id": "018519ae-8919-45fc-beda-2f04214648d8",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        -40,
+        200
+      ],
+      "id": "742f5ae4-0034-41f0-a94a-2e811d288b37",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "resto.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        200,
+        380
+      ],
+      "id": "0b14c222-f192-4672-bd6d-19c0d5e37f32",
+      "name": "Read/Write Files from Disk1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Génère les valeurs de départ pour les pages : 0, 20, 40, ..., jusqu'à 100\nconst startValues = [];\nfor (let i = 0; i < 400; i += 20) {\n  startValues.push({ start: i });\n}\nreturn startValues;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -700,
+        380
+      ],
+      "id": "b2fb8448-5ebf-455f-a9df-d601d476dbef",
+      "name": "Boucle"
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = [];\n\nfor (const item of items) {\n  const data = item.json || {};\n  const results = data.local_results || [];\n\n  for (const place of results) {\n    output.push({\n      json: {\n        nom: place.title || \"Inconnu\",\n        contact: place.phone || \"Aucun\",\n        adresse: place.address || \"Inconnue\",\n        latitude: place.gps_coordinates?.latitude ?? null,\n        longitude: place.gps_coordinates?.longitude ?? null,\n        specialite: place.type || \"Aucune\",\n        rating: place.rating || \"Aucune\",\n        reviews: place.reviews || \"Aucune\",\n        photo: place.thumbnail || null,\n        site: place.website || \"Aucun site\"\n      }\n    });\n  }\n}\n\nreturn output;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -260,
+        380
+      ],
+      "id": "b408b471-25a1-4c23-9e8e-1c76e337f528",
+      "name": "Récupération données"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Boucle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Récupération données",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Boucle": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Récupération données": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "19b0b5eb-9396-41d0-9d96-06c7c032551c",
+  "meta": {
+    "instanceId": "1f8c86df5e24abd227027064c83a983eeb0404696923bd7c6defe9e16b6c2883"
+  },
+  "id": "fUt0kg1TddE7VJnI",
+  "tags": []
+}
