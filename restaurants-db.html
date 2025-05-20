@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🍜 Restaurants Chinois</title>
+  <script src="https://cdn.tailwindcss.com "></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js "></script>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-black text-gray-100 min-h-screen font-sans">
+  <!-- Header -->
+  <header class="text-center py-12 px-4">
+    <h1 class="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-pink-500 mb-3 animate-pulse">🍜 Restaurants Chinois</h1>
+    <p class="text-lg text-gray-400 max-w-xl mx-auto">Explorez les restaurants classés par authenticité culinaire chinoise.</p>
+  </header>
+
+  <!-- Main Content -->
+  <main class="grid grid-cols-1 lg:grid-cols-2 gap-8 px-6 pb-16">
+    
+    <!-- Table Section -->
+    <section class="bg-gray-800/50 backdrop-blur-md rounded-2xl shadow-2xl border border-cyan-500/20 p-6 transition-all duration-500 hover:shadow-cyan-500/30 hover:scale-[1.01]">
+      <h2 class="text-2xl font-bold mb-4 text-cyan-300">Liste Complète</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm table-auto text-left">
+          <thead class="border-b border-cyan-600">
+            <tr>
+              <th class="py-3 px-4">Nom</th>
+              <th class="py-3 px-4">Classification</th>
+              <th class="py-3 px-4">Score</th>
+              <th class="py-3 px-4">Notes</th>
+            </tr>
+          </thead>
+          <tbody id="restaurant-table-body">
+            <!-- Rows will be injected dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Chart Section -->
+    <section class="bg-gray-800/50 backdrop-blur-md rounded-2xl shadow-2xl border border-cyan-500/20 p-6 transition-all duration-500 hover:shadow-cyan-500/30 hover:scale-[1.01]">
+      <h2 class="text-2xl font-bold mb-4 text-cyan-300">Probabilité de Trouver un Vrai Restaurant Chinois</h2>
+      <canvas id="classificationChart" height="300"></canvas>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="text-center text-gray-500 text-sm py-6">
+    &copy; 2025 Restaurants Chinois | Powered by Authentic Flavor Analytics
+  </footer>
+
+  <script>
+    // Data from original file
+    const restaurants = [
+      { name: "Fortuna Ivato", classification: "Moyennement chinois", score: 46.00 },
+      { name: "Quick Delice", classification: "Vraiment chinois", score: 55.60 },
+      { name: "Restaurant Shi Fu", classification: "Moyennement chinois", score: 56.40 },
+      { name: "中国餐馆", classification: "Moyennement chinois", score: 40.00 },
+      { name: "Hotel New Century", classification: "Moyennement chinois", score: 51.20 },
+      { name: "SSFOOD", classification: "Moyennement chinois", score: 43.00 },
+      { name: "Fortuna Tana", classification: "Vraiment chinois", score: 55.40 },
+      { name: "Sao Kuun", classification: "Moyennement chinois", score: 42.67 },
+      { name: "洪潮饭店", classification: "Vraiment chinois", score: 56.50 },
+      { name: "Tianjie food", classification: "Moyennement chinois", score: 40.00 },
+      { name: "皇宫美食 ROSIKAL", classification: "Vraiment chinois", score: 84.75 },
+      { name: "Sakamanga", classification: "Vraiment chinois", score: 56.20 },
+      { name: "Le Pont Rouge", classification: "Moyennement chinois", score: 39.67 },
+      { name: "點都德", classification: "Moyennement chinois", score: 38.00 },
+      { name: "National Center", classification: "Pas chinois", score: 16.00 },
+      { name: "Bon Appetit", classification: "Vraiment chinois", score: 56.50 },
+      { name: "O'Gourmet", classification: "Moyennement chinois", score: 46.50 },
+      { name: "CHEZ CHAN", classification: "Moyennement chinois", score: 38.60 },
+      { name: "Hotel Seoul", classification: "Moyennement chinois", score: 46.60 },
+      { name: "Pan Asia", classification: "Vraiment chinois", score: 56.00 },
+      { name: "La Belle Ville", classification: "Vraiment chinois", score: 54.20 },
+      { name: "DIMA Hirondelle", classification: "Vraiment chinois", score: 75.00 },
+      { name: "Restaurant Fuxin", classification: "Vraiment chinois", score: 63.00 },
+      { name: "Qing Qing", classification: "Vraiment chinois", score: 86.50 },
+      { name: "La voie du Rossignol", classification: "Pas chinois", score: 17.00 },
+      { name: "Gangnam", classification: "Pas chinois", score: 29.33 },
+      { name: "Lakoziako", classification: "Vraiment chinois", score: 56.25 },
+      { name: "Laï tsock", classification: "Vraiment chinois", score: 55.00 },
+      { name: "Dun Huang", classification: "Vraiment chinois", score: 68.80 },
+      { name: "TSANG-KAU", classification: "Vraiment chinois", score: 68.00 },
+      { name: "Le Petit Bouchon", classification: "Moyennement chinois", score: 32.20 },
+      { name: "Sam Voky", classification: "Moyennement chinois", score: 44.40 },
+      { name: "TORA TO RYU", classification: "Vraiment chinois", score: 56.60 },
+      { name: "Wai Man", classification: "Pas chinois", score: 17.00 },
+      { name: "Restaurant Le JASMIN", classification: "Vraiment chinois", score: 68.40 },
+      { name: "TSANG BY-PASS", classification: "Vraiment chinois", score: 58.80 },
+      { name: "Dragon rouge", classification: "Moyennement chinois", score: 31.00 },
+      { name: "HONG KONG Restaurant", classification: "Vraiment chinois", score: 68.67 },
+      { name: "Gargotte Pangalane", classification: "Pas chinois", score: 27.67 },
+      { name: "吕府私房菜", classification: "Moyennement chinois", score: 30.00 },
+      { name: "Grand Resto de Chine", classification: "Vraiment chinois", score: 66.80 },
+      { name: "Zen Garden", classification: "Vraiment chinois", score: 66.60 },
+      { name: "Restaurant Fong Mei", classification: "Vraiment chinois", score: 54.20 },
+      { name: "Hirondelle '燕子'", classification: "Vraiment chinois", score: 94.60 },
+      { name: "Restaurant Shanghai", classification: "Vraiment chinois", score: 56.00 },
+      { name: "l'Orient Asian Fusion", classification: "Vraiment chinois", score: 68.80 },
+      { name: "吕府私房菜（KTV）", classification: "Moyennement chinois", score: 35.00 },
+      { name: "逸香酒樓 Yixiang", classification: "Vraiment chinois", score: 67.20 },
+      { name: "La Jonquille", classification: "Vraiment chinois", score: 54.60 },
+      { name: "La Fleur De Sel", classification: "Vraiment chinois", score: 65.40 },
+      { name: "Kaizen Restaurant", classification: "Vraiment chinois", score: 66.60 },
+      { name: "Le Grand Orient", classification: "Vraiment chinois", score: 66.80 },
+      { name: "凤城 Soleil", classification: "Vraiment chinois", score: 77.20 },
+      { name: "Le Grand Tsang", classification: "Vraiment chinois", score: 67.20 },
+      { name: "Restaurant Le Cantilène", classification: "Pas chinois", score: 29.00 },
+      { name: "Restaurant L'EURASIE", classification: "Moyennement chinois", score: 50.00 },
+      { name: "Lotus Blanc", classification: "Vraiment chinois", score: 66.67 },
+      { name: "佬湘好", classification: "Moyennement chinois", score: 35.00 },
+      { name: "DRAGON ROYAL", classification: "Vraiment chinois", score: 68.00 },
+      { name: "Huo Cuisine", classification: "Vraiment chinois", score: 66.80 }
+    ];
+
+    // Render Table
+    const tbody = document.getElementById('restaurant-table-body');
+    restaurants.forEach(r => {
+      const row = document.createElement('tr');
+      row.className = "border-b border-gray-700 hover:bg-gray-700/50 cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/20";
+      row.innerHTML = `
+        <td class="py-2 px-4 font-medium text-cyan-300">${r.name}</td>
+        <td class="py-2 px-4">${r.classification}</td>
+        <td class="py-2 px-4">${r.score.toFixed(2)}%</td>
+        <td class="py-2 px-4">
+          <span class="inline-block px-2 py-1 rounded-full text-xs font-semibold ${r.classification === 'Vraiment chinois' ? 'bg-green-500/20 text-green-400' : r.classification === 'Moyennement chinois' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-red-500/20 text-red-400'}">
+            ${r.classification}
+          </span>
+        </td>
+      `;
+      tbody.appendChild(row);
+    });
+
+    // Calculate probabilities
+    const counts = {
+      'Vraiment chinois': 0,
+      'Moyennement chinois': 0,
+      'Pas chinois': 0
+    };
+
+    restaurants.forEach(r => counts[r.classification]++);
+    const total = restaurants.length;
+    const data = Object.values(counts).map(v => ((v / total) * 100).toFixed(1));
+
+    // Render Pie Chart
+    new Chart(document.getElementById('classificationChart'), {
+      type: 'pie',
+      data: {
+        labels: ['Authentique', 'Moyen', 'Non-Chinois'],
+        datasets: [{
+          label: 'Probabilité',
+          data: data,
+          backgroundColor: ['#10B981', '#F59E0B', '#EF4444'],
+          borderColor: '#1F2937',
+          borderWidth: 2,
+          hoverOffset: 10
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            labels: { color: 'white' }
+          },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `${ctx.label}: ${ctx.raw}%`
+            }
+          },
+          title: {
+            display: false
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
