@@ -19,38 +19,36 @@ def check_chinese_indicators(place):
     categories = " ".join([str(cat) for cat in place.get("categories", [])]).lower()
     menu_data = str(place.get("menu", place.get("menuItems", ""))).lower()
 
-    # 1. Avis (35 % si positif et mentionne chinois)
+    # 1. Avis (30 % si positif et mentionne chinois)
     if re.search(r"(bonne|délicieux|excellente|savoureux|super|meilleur)\s*(chinois|chinese|cuisine chinoise)", description + reviews):
         indicators["avis"] = True
-        score += 35
-
-    # 2. Cuisine (25 % si cuisine chinoise détectée)
+        score += 30
     if re.search(r"chinese|nems|riz cantonais|canard laqué|wonton|dim sum|porc caramélisé|cuisine chinoise", description + categories + reviews):
         indicators["cuisine"] = True
         score += 25
 
-    # 3. Menu (25 % si plats chinois, -2 % par plat non chinois)
+    # 3. Menu (20 % si plats chinois, -2 % par plat non chinois)
     chinese_dishes = r"nems|riz cantonais|canard laqué|dim sum|wonton|porc caramélisé|chop suey|porc aigre-doux"
     non_chinese_dishes = r"pizza|burger|pasta|steak|frites|sushi|tacos"
     if re.search(chinese_dishes, description + reviews + categories + menu_data):
         indicators["menu"] = True
-        score += 25
+        score += 20
     # Compter les plats non chinois
     non_chinese_matches = re.findall(non_chinese_dishes, description + reviews + categories + menu_data)
     score -= 2 * len(set(non_chinese_matches))  # -2 % par plat unique
     if score < 0:
         score = 0  # Éviter un score négatif
 
-    # 4. Nom (10 %)
+    # 4. Nom (25 %)
     name = str(place.get("title", "")).lower()
     if re.search(r"chine|dragon|muraille|lotus|jonquille|dynastie|orient", name):
         indicators["nom"] = True
-        score += 10
+        score += 25
 
-    # 5. Spécialité (20 % si plat chinois)
+    # 5. Spécialité (25 % si plat chinois)
     if re.search(chinese_dishes, description + categories):
         indicators["specialite"] = True
-        score += 20
+        score += 25
 
     # Lister les variables trouvées
     found_indicators = [key.capitalize() for key, value in indicators.items() if value]
