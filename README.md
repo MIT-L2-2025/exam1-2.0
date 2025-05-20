@@ -15,4 +15,9 @@ voilà le deuxième aperçu du workflow 2 .
 
 ![Aperçu](Workflow2.png)
 
+Et voici la sortie en fichier.HTML
+
+![Aperçu](ExempleRestaurants.png)
+
+
 
