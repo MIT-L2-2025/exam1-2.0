@@ -1,0 +1,174 @@
+{
+  "name": "RestaurantChinois",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -280,
+        -300
+      ],
+      "id": "d123bf42-934e-4dc7-8d95-96b5727dc259",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search.json?engine=google_maps&q=restaurant+chinois+antananarivo",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "Restaurant Chinois Antananarivo"
+            },
+            {
+              "name": "api_key",
+              "value": "2821382bbc2230e657586de1f75afa6c3bd0b31197a13854d807a55c3719b996"
+            },
+            {
+              "name": "start",
+              "value": "={{ $json.start }}"
+            },
+            {
+              "name": "ll",
+              "value": "@-18.792,47.5079,15z"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        80,
+        -300
+      ],
+      "id": "6d5e03c8-b0f6-4469-92c6-bebdda8fe772",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        -300
+      ],
+      "id": "af3a189a-08c6-47d7-905f-5690402d000e",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "restaurantsChinoise.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        760,
+        -120
+      ],
+      "id": "9489ce57-e74a-4028-b493-365ece652957",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nconst maxPages = 5; \nconst output = [];\n\nfor (let i = 0; i <= maxPages * 20; i += 20) {\n  output.push({ json: { start: i } });\n}\n\nreturn output; "
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        -120
+      ],
+      "id": "6ceffffd-0124-47ad-8732-809a3b09b999",
+      "name": "Bouclage"
+    },
+    {
+      "parameters": {
+        "jsCode": "// const output = [];\n\n// for (const item of items) {\n//   const data = item.json || {};\n//   const results = data.local_results || [];\n\n//   for (const place of results) {\n//     output.push({\n//       json: {\n//         nom: place.title || \"Inconnu\",\n//         contact: place.phone || \"Aucun\",\n//         adresse: place.address || \"Inconnue\",\n//         latitude: place.gps_coordinates?.latitude ?? null,\n//         longitude: place.gps_coordinates?.longitude ?? null,\n//         specialite: place.type || \"Aucune\",\n//         photo: place.thumbnail || null,\n//         site: place.website || \"Aucun site\"\n//       }\n//     });\n//   }\n// }\n\n// return output;\nconst output = [];\n\nfor (const item of items) {\n  const data = item.json || {};\n  \n  // data.local_results est un tableau d'objets\n  const results = data.local_results || [];\n  \n  for (const place of results) {\n    output.push({\n      json: {\n        nom: place.title || \"Inconnu\",\n        contact: place.phone || \"Aucun\",\n        adresse: place.address || \"Inconnue\",\n        latitude: place.gps_coordinates?.latitude ?? null,\n        longitude: place.gps_coordinates?.longitude ?? null,\n        specialite: place.type || \"Aucune\",\n        photo: place.thumbnail || null,\n        site: place.website || \"Aucun site\"\n      }\n    });\n  }\n}\n\nreturn output;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        -120
+      ],
+      "id": "b1a3f96b-2a52-4150-9d19-adebae6f94de",
+      "name": "Extraction et Formatage "
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Bouclage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Extraction et Formatage ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bouclage": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraction et Formatage ": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d557e600-85d1-4039-9ca6-6f79ffe3a25b",
+  "meta": {
+    "instanceId": "aa98eaee356022d57626aa030476a794ed98cc8a65537041f00e1c078632fc7a"
+  },
+  "id": "96xvY1yOOOUV2T3v",
+  "tags": []
+}

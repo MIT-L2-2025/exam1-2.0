@@ -1,0 +1,438 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Restaurants Chinois à Antananarivo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      /* Fond dégradé blanc vers beige */
+      background: linear-gradient(135deg, #ffffff 0%, #f5f0e6 100%);
+      margin: 40px;
+      color: #333;
+    }
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 3rem;
+      text-align: center;
+      color: #a00000;
+      text-shadow: 1px 1px 4px rgba(160, 0, 0, 0.4);
+      margin-bottom: 30px;
+    }
+    #search {
+      display: block;
+      margin: 0 auto 40px auto;
+      width: 100%;
+      max-width: 400px;
+      padding: 12px 20px;
+      font-size: 16px;
+      border: 2px solid #b22222;
+      border-radius: 30px;
+      box-shadow: 0 2px 6px rgba(178,34,34,0.3);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 25px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    @media (max-width: 960px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 600px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .restaurant {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+    .restaurant img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-bottom: 2px solid #b22222;
+    }
+    .info {
+      padding: 18px 20px;
+    }
+    .info p {
+      margin: 8px 0;
+      line-height: 1.3;
+    }
+    .info strong {
+      font-size: 20px;
+      color: #b22222;
+    }
+    .info em {
+      font-style: normal;
+      color: #666;
+      font-size: 14px;
+    }
+    #map {
+      height: 500px;
+      width: 100%;
+      margin: 40px auto;
+      max-width: 1200px;
+      border-radius: 12px;
+      border: 3px solid #a00000;
+    }
+    /* ---- Style 3D pour mini-cartes ---- */
+    .mini-map {
+      height: 150px;
+      width: 100%;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+
+      /* Ombre portée pour effet profondeur */
+      box-shadow: 0 6px 15px rgba(160, 0, 0, 0.5);
+
+      /* Perspective + légère inclinaison */
+      transform: perspective(600px) rotateX(7deg);
+      transition: transform 0.3s ease;
+    }
+    .mini-map:hover {
+      /* Redresse la mini-carte au hover */
+      transform: perspective(600px) rotateX(0deg);
+    }
+  </style>
+</head>
+<body>
+  <h1>Restaurants Chinois à Antananarivo</h1>
+  <input type="search" id="search" placeholder="🔍 Rechercher un restaurant..." />
+  <div id="map"></div>
+  <div class="grid" id="restaurantGrid">
+
+    <div class="restaurant">
+      <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4npfLz8Wly5Wa4UNEzcjTJKT-i4sj2k9KQOh5n_Kqp_Z68fGSSN7_Q23DRxiqOWeOJsyCrIPVHGXTjb65mNz8fVl0W6q9p7TAccpJZqJeR0urEKqORDagQjlZvGEL1Cu_1zVWN__=w163-h92-k-no" alt="photo de Dun Huang" />
+      <div class="info">
+        <p><strong>Dun Huang</strong></p>
+        <p><em>Chinese restaurant</em></p>
+        <p><strong>Adresse :</strong> 42 Arabe Andrinampoinimerina, Antananarivo 101, Madagascar</p>  
+        <p><strong>Téléphone :</strong> Aucun</p> 
+        <p><strong>Site web :</strong> Aucun site</p>          
+        <p><strong>Coordonnées GPS :</strong> -18.905614, 47.524070699999996</p>
+        <div class="mini-map" id="miniMap0"></div>
+      </div>
+    </div>
+  
+    <div class="restaurant">
+      <img src="https://lh3.googleusercontent.com/p/AF1QipNV5IfdfmLcw6xZl_UC9xIgmSXKSFaCReLf3JDq=w415-h92-k-no" alt="photo de 凤城 Soleil" />
+      <div class="info">
+        <p><strong>凤城 Soleil</strong></p>
+        <p><em>Chinese restaurant</em></p>
+        <p><strong>Adresse :</strong> Lot IVK 89 bis Anosivavaka Ambohimanarina, Antananarivo 101, Madagascar</p>  
+        <p><strong>Téléphone :</strong> +261 33 11 336 28</p> 
+        <p><strong>Site web :</strong> Aucun site</p>          
+        <p><strong>Coordonnées GPS :</strong> -18.8729457, 47.507969499999994</p>
+        <div class="mini-map" id="miniMap1"></div>
+      </div>
+    </div>
+  
+    <div class="restaurant">
+      <img src="https://lh3.googleusercontent.com/p/AF1QipM07B6izo0ribTcOx106yL2JfPX64vAli2EbcDU=w84-h92-k-no" alt="photo de 吕府私房菜（KTV）" />
+      <div class="info">
+        <p><strong>吕府私房菜（KTV）</strong></p>
+        <p><em>Chinese restaurant</em></p>
+        <p><strong>Adresse :</strong> Madagascar, Antananarivo, AUTOREX, Amitie Fandian</p>  
+        <p><strong>Téléphone :</strong> +261 38 82 066 66</p> 
+        <p><strong>Site web :</strong> Aucun site</p>          
+        <p><strong>Coordonnées GPS :</strong> -18.910683199999998, 47.503318</p>
+        <div class="mini-map" id="miniMap2"></div>
+      </div>
+    </div>
+  
+    <div class="restaurant">
+      <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4npcBL7DZO8gCQRiU6fb6hRajLeGQCmNp96uX0Ekq_MeeolR4O1dcRobenVViX-KXbAaPuewPgi0qejrp-qdSiGHxTprIT4CrKG7OnjgIdjeGz54Bke2OkcHD7RqjbbmnGmIvKqN=w122-h92-k-no" alt="photo de Lotus Blanc Restaurant 荷花酒店" />
+      <div class="info">
+        <p><strong>Lotus Blanc Restaurant 荷花酒店</strong></p>
+        <p><em>Chinese restaurant</em></p>
+        <p><strong>Adresse :</strong> LOT II W 23 B, Antananarivo 101, Madagascar</p>  
+        <p><strong>Téléphone :</strong> Aucun</p> 
+        <p><strong>Site web :</strong> Aucun site</p>          
+        <p><strong>Coordonnées GPS :</strong> -18.9134037, 47.537774399999996</p>
+        <div class="mini-map" id="miniMap3"></div>
+      </div>
+    </div>
+  
+    <div class="restaurant">
+      <img src="https://lh3.googleusercontent.com/p/AF1QipMR8kLY4EHqmvIlOoaEvnzfUf8qY6f944ORYOF9=w147-h92-k-no" alt="photo de HONG KONG Restaurant - salon de The" />
+      <div class="info">
+        <p><strong>HONG KONG Restaurant - salon de The</strong></p>
+        <p><em>Mandarin restaurant</em></p>
+        <p><strong>Adresse :</strong> Toyota, Lalana Doktera. Joseph Raseta, Maibahoaka Ivato Antananarivo IVATO, Antananarivo 105, Madagascar</p>  
+        <p><strong>Téléphone :</strong> +261 38 68 509 77</p> 
+        <p><strong>Site web :</strong> Aucun site</p>          
+        <p><strong>Coordonnées GPS :</strong> -18.830986199999998, 47.465352599999996</p>
+        <div class="mini-map" id="miniMap4"></div>
+      </div>
+    </div>
+  
+    <div class="restaurant">
+      <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nqP73oJx1egNVcJlIsDdKoWo5XL3RBXN0Ve7ajYkfb6ygaYM1RxfUYuOut0H9NCJoVIoLs_oLxwxTDVamnYhWeNzMCXXm4nm9zsVaUpYSZ7tD3E5kG-E4wY1h1WiHhelZ9GqoDQ=w163-h92-k-no" alt="photo de Restaurant Shi Fu" />
+      <div class="info">
+        <p><strong>Restaurant Shi Fu</strong></p>
+        <p><em>Chinese restaurant</em></p>
+        <p><strong>Adresse :</strong> 2G9W+VQ, Antananarivo, Madagascar</p>  
+        <p><strong>Téléphone :</strong> +261 34 51 483 56</p> 
+        <p><strong>Site web :</strong> https://www.facebook.com/Restaurant-Sh%C4%AB-fu-107393411858712/</p>          
+        <p><strong>Coordonnées GPS :</strong> -18.989533899999998, 47.5392912</p>
+        <div class="mini-map" id="miniMap5"></div>
+      </div>
+    </div>
+  
+    <div class="restaurant">
+      <img src="https://lh3.googleusercontent.com/p/AF1QipM07B6izo0ribTcOx106yL2JfPX64vAli2EbcDU=w84-h92-k-no" alt="photo de 吕府私房菜（KTV）" />
+      <div class="info">
+        <p><strong>吕府私房菜（KTV）</strong></p>
+        <p><em>Chinese restaurant</em></p>
+        <p><strong>Adresse :</strong> Madagascar, Antananarivo, AUTOREX, Amitie Fandian</p>  
+        <p><strong>Téléphone :</strong> +261 38 82 066 66</p> 
+        <p><strong>Site web :</strong> Aucun site</p>          
+        <p><strong>Coordonnées GPS :</strong> -18.910683199999998, 47.503318</p>
+        <div class="mini-map" id="miniMap6"></div>
+      </div>
+    </div>
+  
+    <div class="restaurant">
+      <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nrolgYuDDt-1Xqh5wivzSHe2fDPdzRSv22kEGLubj_cR2CHi_T7w1VLiKDg0WORmkzQxGg1WT4TqqWoXzRmtnybguVNd4SciUobZd4srvsrD-vGIT_TFtEsEXsOz3j8MEwyt0Ca=w92-h92-k-no" alt="photo de 佬湘好" />
+      <div class="info">
+        <p><strong>佬湘好</strong></p>
+        <p><em>Chinese restaurant</em></p>
+        <p><strong>Adresse :</strong> Madagascar, Antanetib, 3, MG Antananarivo, 邮政编码: 105</p>  
+        <p><strong>Téléphone :</strong> +261 38 52 066 66</p> 
+        <p><strong>Site web :</strong> Aucun site</p>          
+        <p><strong>Coordonnées GPS :</strong> -18.835245699999998, 47.4647325</p>
+        <div class="mini-map" id="miniMap7"></div>
+      </div>
+    </div>
+  
+    <div class="restaurant">
+      <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4noIQrJX_tpXsh9j4lJbIdRxlcZx8s57mQEfmN-b4obXc75cSjpNPAqEy3WUaXAUCmGDt364AC2jZcq0Mc_l16WbL8dcgC_WFiYlL3DZSzFADSG1xa327SunVWFl-uXmsQosyHNg=w163-h92-k-no" alt="photo de JiGongBao(雞宮煲)" />
+      <div class="info">
+        <p><strong>JiGongBao(雞宮煲)</strong></p>
+        <p><em>Chinese restaurant</em></p>
+        <p><strong>Adresse :</strong> 5FPM+WRQ, Ambohijanahary-Ivato, Antananarivo, Madagascar</p>  
+        <p><strong>Téléphone :</strong> +261 38 53 887 04</p> 
+        <p><strong>Site web :</strong> Aucun site</p>          
+        <p><strong>Coordonnées GPS :</strong> -18.8135221, 47.4848558</p>
+        <div class="mini-map" id="miniMap8"></div>
+      </div>
+    </div>
+  
+    <div class="restaurant">
+      <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4noMFUueYLv4CMCdp9Oi4DzDifKYuj2t59drEeKVloyHrPM9Cq-LWDqZszw9B56eE7bMWhJyNA7YGAeswkSupAHt6cAeOl80vDdEY_PiMdl_B8ivfS6SzGpZd4JbS1A1Rut7j6_A=w122-h92-k-no" alt="photo de 逸香酒樓 Yixiang Restaurant" />
+      <div class="info">
+        <p><strong>逸香酒樓 Yixiang Restaurant</strong></p>
+        <p><em>Dim sum restaurant</em></p>
+        <p><strong>Adresse :</strong> IVT 10, 4G48+V2P, Rue Docteur Joseph Raseta, Antananarivo, Madagascar</p>  
+        <p><strong>Téléphone :</strong> +261 34 57 088 88</p> 
+        <p><strong>Site web :</strong> Aucun site</p>          
+        <p><strong>Coordonnées GPS :</strong> -18.892812499999998, 47.5150625</p>
+        <div class="mini-map" id="miniMap9"></div>
+      </div>
+    </div>
+  
+    <div class="restaurant">
+      <img src="" alt="photo de La voie du Rossignol" />
+      <div class="info">
+        <p><strong>La voie du Rossignol</strong></p>
+        <p><em>Chinese restaurant</em></p>
+        <p><strong>Adresse :</strong> 3GXH+QVR, Antananarivo 101, Madagascar</p>  
+        <p><strong>Téléphone :</strong> Aucun</p> 
+        <p><strong>Site web :</strong> Aucun site</p>          
+        <p><strong>Coordonnées GPS :</strong> -18.900512499999998, 47.5296406</p>
+        <div class="mini-map" id="miniMap10"></div>
+      </div>
+    </div>
+  
+    <div class="restaurant">
+      <img src="" alt="photo de Tianjie food (天街 中华料理)" />
+      <div class="info">
+        <p><strong>Tianjie food (天街 中华料理)</strong></p>
+        <p><em>Chinese restaurant</em></p>
+        <p><strong>Adresse :</strong> 3GVM+QG6, Antananarivo, Madagascar</p>  
+        <p><strong>Téléphone :</strong> +261 34 29 283 82</p> 
+        <p><strong>Site web :</strong> Aucun site</p>          
+        <p><strong>Coordonnées GPS :</strong> -18.9054453, 47.533779599999995</p>
+        <div class="mini-map" id="miniMap11"></div>
+      </div>
+    </div>
+  
+    <div class="restaurant">
+      <img src="" alt="photo de 吕府私房菜" />
+      <div class="info">
+        <p><strong>吕府私房菜</strong></p>
+        <p><em>Chinese restaurant</em></p>
+        <p><strong>Adresse :</strong> Madagascar, Antananarivo</p>  
+        <p><strong>Téléphone :</strong> Aucun</p> 
+        <p><strong>Site web :</strong> Aucun site</p>          
+        <p><strong>Coordonnées GPS :</strong> -18.9106979, 47.503316399999996</p>
+        <div class="mini-map" id="miniMap12"></div>
+      </div>
+    </div>
+  
+    <div class="restaurant">
+      <img src="" alt="photo de Wai Man" />
+      <div class="info">
+        <p><strong>Wai Man</strong></p>
+        <p><em>Chinese restaurant</em></p>
+        <p><strong>Adresse :</strong> 3GW6+VMX, Nord-Est-Coté parking, Antananarivo, Madagascar</p>  
+        <p><strong>Téléphone :</strong> Aucun</p> 
+        <p><strong>Site web :</strong> Aucun site</p>          
+        <p><strong>Coordonnées GPS :</strong> -18.902773099999997, 47.5117251</p>
+        <div class="mini-map" id="miniMap13"></div>
+      </div>
+    </div>
+  
+    <div class="restaurant">
+      <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nroVUHWlfakl_6LXVqP-IROmfYQJLiiumyq-rvN089TnN2zpJVXX6TdfkGOLL6BsiztSEHsn_8783N7mUh-pO2vrgeFucsdzCS7lYQC6G7632VPbt0mz_pca09V1c85u5cekdgbpQ=w80-h106-k-no" alt="photo de TSANG-KAU" />
+      <div class="info">
+        <p><strong>TSANG-KAU</strong></p>
+        <p><em>Chinese restaurant</em></p>
+        <p><strong>Adresse :</strong> 3GQC+R2Q, Arabe Victoire Rasoamanarivo, Antananarivo, Madagascar</p>  
+        <p><strong>Téléphone :</strong> Aucun</p> 
+        <p><strong>Site web :</strong> Aucun site</p>          
+        <p><strong>Coordonnées GPS :</strong> -18.9104137, 47.5201174</p>
+        <div class="mini-map" id="miniMap14"></div>
+      </div>
+    </div>
+  
+    <div class="restaurant">
+      <img src="" alt="photo de Restaurant Lo&amp;Ma" />
+      <div class="info">
+        <p><strong>Restaurant Lo&amp;Ma</strong></p>
+        <p><em>Chinese restaurant</em></p>
+        <p><strong>Adresse :</strong> III D 12, Antananarivo, Madagascar</p>  
+        <p><strong>Téléphone :</strong> +261 34 18 892 74</p> 
+        <p><strong>Site web :</strong> Aucun site</p>          
+        <p><strong>Coordonnées GPS :</strong> -18.8791902, 47.5079055</p>
+        <div class="mini-map" id="miniMap15"></div>
+      </div>
+    </div>
+  
+    <div class="restaurant">
+      <img src="https://lh3.googleusercontent.com/p/AF1QipML_3XWx4pWl7KXX0mCi6-o280LXBt1XRh1aTp8=w252-h92-k-no" alt="photo de Les Petits Plats De Maman" />
+      <div class="info">
+        <p><strong>Les Petits Plats De Maman</strong></p>
+        <p><em>Hot pot restaurant</em></p>
+        <p><strong>Adresse :</strong> Immeuble Art&amp;jardin Antaninarenina, En face bio 33, Antananarivo 101, Madagascar</p>  
+        <p><strong>Téléphone :</strong> +261 34 03 777 71</p> 
+        <p><strong>Site web :</strong> Aucun site</p>          
+        <p><strong>Coordonnées GPS :</strong> -18.9107144, 47.522312799999995</p>
+        <div class="mini-map" id="miniMap16"></div>
+      </div>
+    </div>
+  
+    <div class="restaurant">
+      <img src="" alt="photo de Café de NanShan 南山咖啡西餐厅" />
+      <div class="info">
+        <p><strong>Café de NanShan 南山咖啡西餐厅</strong></p>
+        <p><em>Mandarin restaurant</em></p>
+        <p><strong>Adresse :</strong> 101, Antananarivo 101, Madagascar</p>  
+        <p><strong>Téléphone :</strong> +261 38 83 744 18</p> 
+        <p><strong>Site web :</strong> Aucun site</p>          
+        <p><strong>Coordonnées GPS :</strong> -18.901388999999998, 47.5255873</p>
+        <div class="mini-map" id="miniMap17"></div>
+      </div>
+    </div>
+  
+    <div class="restaurant">
+      <img src="" alt="photo de 中国餐馆" />
+      <div class="info">
+        <p><strong>中国餐馆</strong></p>
+        <p><em>Chinese restaurant</em></p>
+        <p><strong>Adresse :</strong> Madagascar, Antananarivo, Lalana Pastora Rabeony Hans</p>  
+        <p><strong>Téléphone :</strong> Aucun</p> 
+        <p><strong>Site web :</strong> Aucun site</p>          
+        <p><strong>Coordonnées GPS :</strong> -18.907339999999998, 47.5342068</p>
+        <div class="mini-map" id="miniMap18"></div>
+      </div>
+    </div>
+  
+    <div class="restaurant">
+      <img src="https://lh3.googleusercontent.com/gps-cs-s/AC9h4nrv9C5K_C8oR6rRSYNxpTKyWiJ7ig5yH15yLfgcdG2-78WslMvn0uyz_ZlVCos3r-SLNy4CrxIpaMDkVpujgVE-TQrV8h0X5Dtf-jRxMsfkxdHrFA3UOprtlTydGvXgymDcCae7=w199-h92-k-no" alt="photo de Qing Qing Restaurant (青青餐館)" />
+      <div class="info">
+        <p><strong>Qing Qing Restaurant (青青餐館)</strong></p>
+        <p><em>Chinese restaurant</em></p>
+        <p><strong>Adresse :</strong> 5F98+G62, Talatamaty, Madagascar</p>  
+        <p><strong>Téléphone :</strong> +261 34 69 261 62</p> 
+        <p><strong>Site web :</strong> Aucun site</p>          
+        <p><strong>Coordonnées GPS :</strong> -18.831281699999998, 47.4655546</p>
+        <div class="mini-map" id="miniMap19"></div>
+      </div>
+    </div>
+  
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+
+  <script>
+    const restaurants = [{"nom":"Dun Huang","contact":"Aucun","adresse":"42 Arabe Andrinampoinimerina, Antananarivo 101, Madagascar","latitude":-18.905614,"longitude":47.524070699999996,"specialite":"Chinese restaurant","photo":"https://lh3.googleusercontent.com/gps-cs-s/AC9h4npfLz8Wly5Wa4UNEzcjTJKT-i4sj2k9KQOh5n_Kqp_Z68fGSSN7_Q23DRxiqOWeOJsyCrIPVHGXTjb65mNz8fVl0W6q9p7TAccpJZqJeR0urEKqORDagQjlZvGEL1Cu_1zVWN__=w163-h92-k-no","site":"Aucun site","probabiliteVraiRestaurantChinois":0.6122448979591837,"checks":{"nomChinois":1,"specialiteOk":1,"emplacementOk":1,"decorOk":0,"ratingOk":0,"avisSuffisants":0}},{"nom":"凤城 Soleil","contact":"+261 33 11 336 28","adresse":"Lot IVK 89 bis Anosivavaka Ambohimanarina, Antananarivo 101, Madagascar","latitude":-18.8729457,"longitude":47.507969499999994,"specialite":"Chinese restaurant","photo":"https://lh3.googleusercontent.com/p/AF1QipNV5IfdfmLcw6xZl_UC9xIgmSXKSFaCReLf3JDq=w415-h92-k-no","site":"Aucun site","probabiliteVraiRestaurantChinois":0.4081632653061225,"checks":{"nomChinois":1,"specialiteOk":1,"emplacementOk":0,"decorOk":0,"ratingOk":0,"avisSuffisants":0}},{"nom":"吕府私房菜（KTV）","contact":"+261 38 82 066 66","adresse":"Madagascar, Antananarivo, AUTOREX, Amitie Fandian","latitude":-18.910683199999998,"longitude":47.503318,"specialite":"Chinese restaurant","photo":"https://lh3.googleusercontent.com/p/AF1QipM07B6izo0ribTcOx106yL2JfPX64vAli2EbcDU=w84-h92-k-no","site":"Aucun site","probabiliteVraiRestaurantChinois":0.4081632653061225,"checks":{"nomChinois":1,"specialiteOk":1,"emplacementOk":0,"decorOk":0,"ratingOk":0,"avisSuffisants":0}},{"nom":"Lotus Blanc Restaurant 荷花酒店","contact":"Aucun","adresse":"LOT II W 23 B, Antananarivo 101, Madagascar","latitude":-18.9134037,"longitude":47.537774399999996,"specialite":"Chinese restaurant","photo":"https://lh3.googleusercontent.com/gps-cs-s/AC9h4npcBL7DZO8gCQRiU6fb6hRajLeGQCmNp96uX0Ekq_MeeolR4O1dcRobenVViX-KXbAaPuewPgi0qejrp-qdSiGHxTprIT4CrKG7OnjgIdjeGz54Bke2OkcHD7RqjbbmnGmIvKqN=w122-h92-k-no","site":"Aucun site","probabiliteVraiRestaurantChinois":0.4081632653061225,"checks":{"nomChinois":1,"specialiteOk":1,"emplacementOk":0,"decorOk":0,"ratingOk":0,"avisSuffisants":0}},{"nom":"HONG KONG Restaurant - salon de The","contact":"+261 38 68 509 77","adresse":"Toyota, Lalana Doktera. Joseph Raseta, Maibahoaka Ivato Antananarivo IVATO, Antananarivo 105, Madagascar","latitude":-18.830986199999998,"longitude":47.465352599999996,"specialite":"Mandarin restaurant","photo":"https://lh3.googleusercontent.com/p/AF1QipMR8kLY4EHqmvIlOoaEvnzfUf8qY6f944ORYOF9=w147-h92-k-no","site":"Aucun site","probabiliteVraiRestaurantChinois":0.4081632653061225,"checks":{"nomChinois":1,"specialiteOk":1,"emplacementOk":0,"decorOk":0,"ratingOk":0,"avisSuffisants":0}},{"nom":"Restaurant Shi Fu","contact":"+261 34 51 483 56","adresse":"2G9W+VQ, Antananarivo, Madagascar","latitude":-18.989533899999998,"longitude":47.5392912,"specialite":"Chinese restaurant","photo":"https://lh3.googleusercontent.com/gps-cs-s/AC9h4nqP73oJx1egNVcJlIsDdKoWo5XL3RBXN0Ve7ajYkfb6ygaYM1RxfUYuOut0H9NCJoVIoLs_oLxwxTDVamnYhWeNzMCXXm4nm9zsVaUpYSZ7tD3E5kG-E4wY1h1WiHhelZ9GqoDQ=w163-h92-k-no","site":"https://www.facebook.com/Restaurant-Sh%C4%AB-fu-107393411858712/","probabiliteVraiRestaurantChinois":0.4081632653061225,"checks":{"nomChinois":1,"specialiteOk":1,"emplacementOk":0,"decorOk":0,"ratingOk":0,"avisSuffisants":0}},{"nom":"吕府私房菜（KTV）","contact":"+261 38 82 066 66","adresse":"Madagascar, Antananarivo, AUTOREX, Amitie Fandian","latitude":-18.910683199999998,"longitude":47.503318,"specialite":"Chinese restaurant","photo":"https://lh3.googleusercontent.com/p/AF1QipM07B6izo0ribTcOx106yL2JfPX64vAli2EbcDU=w84-h92-k-no","site":"Aucun site","probabiliteVraiRestaurantChinois":0.4081632653061225,"checks":{"nomChinois":1,"specialiteOk":1,"emplacementOk":0,"decorOk":0,"ratingOk":0,"avisSuffisants":0}},{"nom":"佬湘好","contact":"+261 38 52 066 66","adresse":"Madagascar, Antanetib, 3, MG Antananarivo, 邮政编码: 105","latitude":-18.835245699999998,"longitude":47.4647325,"specialite":"Chinese restaurant","photo":"https://lh3.googleusercontent.com/gps-cs-s/AC9h4nrolgYuDDt-1Xqh5wivzSHe2fDPdzRSv22kEGLubj_cR2CHi_T7w1VLiKDg0WORmkzQxGg1WT4TqqWoXzRmtnybguVNd4SciUobZd4srvsrD-vGIT_TFtEsEXsOz3j8MEwyt0Ca=w92-h92-k-no","site":"Aucun site","probabiliteVraiRestaurantChinois":0.4081632653061225,"checks":{"nomChinois":1,"specialiteOk":1,"emplacementOk":0,"decorOk":0,"ratingOk":0,"avisSuffisants":0}},{"nom":"JiGongBao(雞宮煲)","contact":"+261 38 53 887 04","adresse":"5FPM+WRQ, Ambohijanahary-Ivato, Antananarivo, Madagascar","latitude":-18.8135221,"longitude":47.4848558,"specialite":"Chinese restaurant","photo":"https://lh3.googleusercontent.com/gps-cs-s/AC9h4noIQrJX_tpXsh9j4lJbIdRxlcZx8s57mQEfmN-b4obXc75cSjpNPAqEy3WUaXAUCmGDt364AC2jZcq0Mc_l16WbL8dcgC_WFiYlL3DZSzFADSG1xa327SunVWFl-uXmsQosyHNg=w163-h92-k-no","site":"Aucun site","probabiliteVraiRestaurantChinois":0.4081632653061225,"checks":{"nomChinois":1,"specialiteOk":1,"emplacementOk":0,"decorOk":0,"ratingOk":0,"avisSuffisants":0}},{"nom":"逸香酒樓 Yixiang Restaurant","contact":"+261 34 57 088 88","adresse":"IVT 10, 4G48+V2P, Rue Docteur Joseph Raseta, Antananarivo, Madagascar","latitude":-18.892812499999998,"longitude":47.5150625,"specialite":"Dim sum restaurant","photo":"https://lh3.googleusercontent.com/gps-cs-s/AC9h4noMFUueYLv4CMCdp9Oi4DzDifKYuj2t59drEeKVloyHrPM9Cq-LWDqZszw9B56eE7bMWhJyNA7YGAeswkSupAHt6cAeOl80vDdEY_PiMdl_B8ivfS6SzGpZd4JbS1A1Rut7j6_A=w122-h92-k-no","site":"Aucun site","probabiliteVraiRestaurantChinois":0.4081632653061225,"checks":{"nomChinois":1,"specialiteOk":1,"emplacementOk":0,"decorOk":0,"ratingOk":0,"avisSuffisants":0}},{"nom":"La voie du Rossignol","contact":"Aucun","adresse":"3GXH+QVR, Antananarivo 101, Madagascar","latitude":-18.900512499999998,"longitude":47.5296406,"specialite":"Chinese restaurant","photo":null,"site":"Aucun site","probabiliteVraiRestaurantChinois":0.4081632653061225,"checks":{"nomChinois":1,"specialiteOk":1,"emplacementOk":0,"decorOk":0,"ratingOk":0,"avisSuffisants":0}},{"nom":"Tianjie food (天街 中华料理)","contact":"+261 34 29 283 82","adresse":"3GVM+QG6, Antananarivo, Madagascar","latitude":-18.9054453,"longitude":47.533779599999995,"specialite":"Chinese restaurant","photo":null,"site":"Aucun site","probabiliteVraiRestaurantChinois":0.4081632653061225,"checks":{"nomChinois":1,"specialiteOk":1,"emplacementOk":0,"decorOk":0,"ratingOk":0,"avisSuffisants":0}},{"nom":"吕府私房菜","contact":"Aucun","adresse":"Madagascar, Antananarivo","latitude":-18.9106979,"longitude":47.503316399999996,"specialite":"Chinese restaurant","photo":null,"site":"Aucun site","probabiliteVraiRestaurantChinois":0.4081632653061225,"checks":{"nomChinois":1,"specialiteOk":1,"emplacementOk":0,"decorOk":0,"ratingOk":0,"avisSuffisants":0}},{"nom":"Wai Man","contact":"Aucun","adresse":"3GW6+VMX, Nord-Est-Coté parking, Antananarivo, Madagascar","latitude":-18.902773099999997,"longitude":47.5117251,"specialite":"Chinese restaurant","photo":null,"site":"Aucun site","probabiliteVraiRestaurantChinois":0.4081632653061225,"checks":{"nomChinois":1,"specialiteOk":1,"emplacementOk":0,"decorOk":0,"ratingOk":0,"avisSuffisants":0}},{"nom":"TSANG-KAU","contact":"Aucun","adresse":"3GQC+R2Q, Arabe Victoire Rasoamanarivo, Antananarivo, Madagascar","latitude":-18.9104137,"longitude":47.5201174,"specialite":"Chinese restaurant","photo":"https://lh3.googleusercontent.com/gps-cs-s/AC9h4nroVUHWlfakl_6LXVqP-IROmfYQJLiiumyq-rvN089TnN2zpJVXX6TdfkGOLL6BsiztSEHsn_8783N7mUh-pO2vrgeFucsdzCS7lYQC6G7632VPbt0mz_pca09V1c85u5cekdgbpQ=w80-h106-k-no","site":"Aucun site","probabiliteVraiRestaurantChinois":0.4081632653061225,"checks":{"nomChinois":0,"specialiteOk":1,"emplacementOk":1,"decorOk":0,"ratingOk":0,"avisSuffisants":0}},{"nom":"Restaurant Lo&Ma","contact":"+261 34 18 892 74","adresse":"III D 12, Antananarivo, Madagascar","latitude":-18.8791902,"longitude":47.5079055,"specialite":"Chinese restaurant","photo":null,"site":"Aucun site","probabiliteVraiRestaurantChinois":0.4081632653061225,"checks":{"nomChinois":1,"specialiteOk":1,"emplacementOk":0,"decorOk":0,"ratingOk":0,"avisSuffisants":0}},{"nom":"Les Petits Plats De Maman","contact":"+261 34 03 777 71","adresse":"Immeuble Art&jardin Antaninarenina, En face bio 33, Antananarivo 101, Madagascar","latitude":-18.9107144,"longitude":47.522312799999995,"specialite":"Hot pot restaurant","photo":"https://lh3.googleusercontent.com/p/AF1QipML_3XWx4pWl7KXX0mCi6-o280LXBt1XRh1aTp8=w252-h92-k-no","site":"Aucun site","probabiliteVraiRestaurantChinois":0.4081632653061225,"checks":{"nomChinois":1,"specialiteOk":0,"emplacementOk":1,"decorOk":0,"ratingOk":0,"avisSuffisants":0}},{"nom":"Café de NanShan 南山咖啡西餐厅","contact":"+261 38 83 744 18","adresse":"101, Antananarivo 101, Madagascar","latitude":-18.901388999999998,"longitude":47.5255873,"specialite":"Mandarin restaurant","photo":null,"site":"Aucun site","probabiliteVraiRestaurantChinois":0.4081632653061225,"checks":{"nomChinois":1,"specialiteOk":1,"emplacementOk":0,"decorOk":0,"ratingOk":0,"avisSuffisants":0}},{"nom":"中国餐馆","contact":"Aucun","adresse":"Madagascar, Antananarivo, Lalana Pastora Rabeony Hans","latitude":-18.907339999999998,"longitude":47.5342068,"specialite":"Chinese restaurant","photo":null,"site":"Aucun site","probabiliteVraiRestaurantChinois":0.4081632653061225,"checks":{"nomChinois":1,"specialiteOk":1,"emplacementOk":0,"decorOk":0,"ratingOk":0,"avisSuffisants":0}},{"nom":"Qing Qing Restaurant (青青餐館)","contact":"+261 34 69 261 62","adresse":"5F98+G62, Talatamaty, Madagascar","latitude":-18.831281699999998,"longitude":47.4655546,"specialite":"Chinese restaurant","photo":"https://lh3.googleusercontent.com/gps-cs-s/AC9h4nrv9C5K_C8oR6rRSYNxpTKyWiJ7ig5yH15yLfgcdG2-78WslMvn0uyz_ZlVCos3r-SLNy4CrxIpaMDkVpujgVE-TQrV8h0X5Dtf-jRxMsfkxdHrFA3UOprtlTydGvXgymDcCae7=w199-h92-k-no","site":"Aucun site","probabiliteVraiRestaurantChinois":0.4081632653061225,"checks":{"nomChinois":1,"specialiteOk":1,"emplacementOk":0,"decorOk":0,"ratingOk":0,"avisSuffisants":0}}];
+
+    // Filtre recherche texte
+    document.getElementById("search").addEventListener("input", function() {
+      const query = this.value.toLowerCase();
+      const cards = document.querySelectorAll(".restaurant");
+      cards.forEach(card => {
+        const text = card.innerText.toLowerCase();
+        card.style.display = text.includes(query) ? "block" : "none";
+      });
+    });
+
+    // Marqueur custom rouge avec ombre
+    const redIcon = L.icon({
+      iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
+      iconSize: [40, 40],
+      iconAnchor: [20, 40],
+      popupAnchor: [0, -40],
+      shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+      shadowSize: [41, 41],
+      shadowAnchor: [12, 41]
+    });
+
+    // Carte principale centrée sur Antananarivo
+    const mainMap = L.map("map").setView([-18.9137, 47.5361], 13);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap contributors"
+    }).addTo(mainMap);
+
+    restaurants.forEach((r, i) => {
+      if (r.latitude && r.longitude) {
+        // Marqueur sur la grande carte
+        L.marker([r.latitude, r.longitude]).addTo(mainMap).bindPopup(r.nom || "Restaurant");
+
+        // Mini-carte avec effet 3D et marqueur custom
+        const miniMapId = "miniMap" + i;
+        const miniMapDiv = document.getElementById(miniMapId);
+        if (miniMapDiv) {
+          const miniMap = L.map(miniMapId, {
+            center: [r.latitude, r.longitude],
+            zoom: 15,
+            zoomControl: false,
+            attributionControl: false,
+            dragging: true,
+            scrollWheelZoom: true,
+            doubleClickZoom: true,
+            boxZoom: false,
+            keyboard: false,
+          });
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(miniMap);
+          L.marker([r.latitude, r.longitude], { icon: redIcon }).addTo(miniMap);
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>

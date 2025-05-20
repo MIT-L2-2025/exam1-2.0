@@ -1,0 +1,201 @@
+{
+  "name": "ChinoisAntananarivo",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1760,
+        -480
+      ],
+      "id": "3a2ad7bf-93f4-4f98-8336-c9a29f079520",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "fileSelector": "ListeRestaurant.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -1460,
+        -480
+      ],
+      "id": "b2e92ccc-1215-435b-99e3-97cd9f99a6aa",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "operation": "fromJson",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -1260,
+        -600
+      ],
+      "id": "cc063ede-e537-474d-8227-0f243dfa6227",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "command": "ls -l ListeRestaurant.json"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -1600,
+        -600
+      ],
+      "id": "b0bcfdb7-02c9-4544-a972-22e2c8d87423",
+      "name": "Execute Command"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "/home/ayan/restaurant_chinois.html",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        -580
+      ],
+      "id": "4f6059e2-ef91-49e2-913a-05817386bcf7",
+      "name": "Read/Write Files from Disk3"
+    },
+    {
+      "parameters": {
+        "jsCode": "// // Récupérer les données depuis items[0].json\nconst data = Array.isArray(items[0].json) ? items[0].json : items[0].json.data || [];\n\n// const rawData = items[0]?.json;\n// const data = Array.isArray(rawData)\n//   ? rawData\n//   : Array.isArray(rawData?.data)\n//     ? rawData.data\n//     : [];\n\n\n// Lieux fréquentés par la communauté chinoise\nconst lieuxChinois = [\n  'quartier chinois', 'antaninarenina', 'analakely', 'andraharo',\n  'behoririka', 'ankarahabe', 'ambodivona', 'ambatomaro',\n  'andohalo', 'arabe', 'andrinampoinimerina', 'tanjombato'\n];\n\n// Noms de famille chinois\nconst motsChinois = [\n  \"wang\", \"li\", \"chen\", \"liu\", \"zhang\", \"huang\", \"zhou\", \"lin\", \"yang\",\n  \"wu\", \"xu\", \"zheng\", \"gao\", \"sun\", \"ma\", \"zhao\", \"guo\", \"he\", \"luo\",\n  \"tang\", \"feng\", \"deng\", \"cai\", \"xie\", \"song\", \"dong\", \"han\", \"cao\",\n  \"yu\", \"pan\", \"wei\", \"jiang\", \"xiong\", \"fang\", \"yuan\", \"du\", \"qian\",\n  \"shi\", \"zhong\", \"dai\"\n];\n\n// Mots pour détecter le décor chinois\nconst decorKeywords = [\n  'chinois', 'chinese', 'asiatique', 'asian',\n  'lantern', 'bamboo', 'pagoda', 'dragon',\n  'oriental', 'zen', 'feng shui', 'typical', 'traditional'\n];\nconst decorMots = new RegExp(decorKeywords.join('|'), 'i');\n\n// Mots-clés pour spécialités chinoises\nconst specialitesChinoises = /chinese|mandarin|sichuan|cantonese|dim sum|pekin|hunan|hakka/i;\n\n// Pondérations\nconst poids = {\n  nomChinois: 1,\n  specialiteOk: 1,\n  emplacementOk: 1,\n  decorOk: 0.7,\n  ratingOk: 0.6,\n  avisSuffisants: 0.6\n};\n\n// Calcul du poids total\nconst poidsTotal = Object.values(poids).reduce((a, b) => a + b, 0);\n\n// Initialiser les résultats\nlet results = [];\n\nfor (let r of data) {\n  const nom = (r.nom || '').toLowerCase();\n  const spec = (r.specialite || '').toLowerCase();\n  const adresse = (r.adresse || '').toLowerCase();\n  const decor = (r.decor || '').toLowerCase();\n  const rating = r.rating || 0;\n  const reviews = r.reviews || 0;\n\n  // Critères binaires\n  const nomChinois = /[\\u4e00-\\u9fff]/.test(nom) || motsChinois.some(mot => nom.includes(mot)) ? 1 : 0;\n  const specialiteOk = specialitesChinoises.test(spec) ? 1 : 0;\n  const emplacementOk = lieuxChinois.some(lieu => adresse.includes(lieu)) ? 1 : 0;\n  const decorOk = decorMots.test(decor) ? 1 : 0;\n  const ratingOk = rating >= 4 ? 1 : 0;\n  const avisSuffisants = reviews >= 5 ? 1 : 0;\n\n  // Score pondéré\n  const scoreTotal =\n    nomChinois * poids.nomChinois +\n    specialiteOk * poids.specialiteOk +\n    emplacementOk * poids.emplacementOk +\n    decorOk * poids.decorOk +\n    ratingOk * poids.ratingOk +\n    avisSuffisants * poids.avisSuffisants;\n\n  const probabiliteVraiRestaurantChinois = scoreTotal / poidsTotal;\n\n  // Ajouter aux résultats\n  results.push({\n    json: {\n      ...r,\n      probabiliteVraiRestaurantChinois,\n      checks: {\n        nomChinois,\n        specialiteOk,\n        emplacementOk,\n        decorOk,\n        ratingOk,\n        avisSuffisants\n      }\n    }\n  });\n}\n\n// Retourner les résultats au format n8n\nreturn results;\n\n\n\n// Debug : log la structure d'entrée\n// console.log(\"items[0]:\", JSON.stringify(items[0], null, 2));\n\n// const raw = items[0]?.json;\n\n// let data = [];\n// if (Array.isArray(raw)) {\n//   data = raw;\n// } else if (Array.isArray(raw?.data)) {\n//   data = raw.data;\n// } else if (typeof raw === 'object') {\n//   data = [raw]; // cas courant : un seul objet\n// } else {\n//   data = [];\n// }\n\n// const lieuxChinois = [ /* ... même liste ... */ ];\n// const motsChinois = [ /* ... même liste ... */ ];\n// const decorKeywords = [ /* ... même liste ... */ ];\n// const decorMots = new RegExp(decorKeywords.join('|'), 'i');\n// const specialitesChinoises = /chinese|mandarin|sichuan|cantonese|dim sum|pekin|hunan|hakka/i;\n\n// const poids = {\n//   nomChinois: 1,\n//   specialiteOk: 1,\n//   emplacementOk: 1,\n//   decorOk: 0.7,\n//   ratingOk: 0.6,\n//   avisSuffisants: 0.6\n// };\n// const poidsTotal = Object.values(poids).reduce((a, b) => a + b, 0);\n\n// let results = [];\n\n// for (let r of data) {\n//   const nom = (r.nom || '').toLowerCase();\n//   const spec = (r.specialite || '').toLowerCase();\n//   const adresse = (r.adresse || '').toLowerCase();\n//   const decor = (r.decor || '').toLowerCase();\n//   const rating = r.rating || 0;\n//   const reviews = r.reviews || 0;\n\n//   const nomChinois = /[\\u4e00-\\u9fff]/.test(nom) || motsChinois.some(mot => nom.includes(mot)) ? 1 : 0;\n//   const specialiteOk = specialitesChinoises.test(spec) ? 1 : 0;\n//   const emplacementOk = lieuxChinois.some(lieu => adresse.includes(lieu)) ? 1 : 0;\n//   const decorOk = decorMots.test(decor) ? 1 : 0;\n//   const ratingOk = rating >= 4 ? 1 : 0;\n//   const avisSuffisants = reviews >= 5 ? 1 : 0;\n\n//   const scoreTotal =\n//     nomChinois * poids.nomChinois +\n//     specialiteOk * poids.specialiteOk +\n//     emplacementOk * poids.emplacementOk +\n//     decorOk * poids.decorOk +\n//     ratingOk * poids.ratingOk +\n//     avisSuffisants * poids.avisSuffisants;\n\n//   const probabiliteVraiRestaurantChinois = scoreTotal / poidsTotal;\n\n//   results.push({\n//     json: {\n//       ...r,\n//       probabiliteVraiRestaurantChinois,\n//       checks: {\n//         nomChinois,\n//         specialiteOk,\n//         emplacementOk,\n//         decorOk,\n//         ratingOk,\n//         avisSuffisants\n//       }\n//     }\n//   });\n// }\n\n// // Retourner les résultats au format n8n\n// return results.length ? results : [{ json: { message: 'Aucun restaurant détecté ou données vides.' } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1040,
+        -480
+      ],
+      "id": "d63e9a18-1bf8-4bee-8b9e-2c7a782bf6de",
+      "name": "Extraction et CLassification"
+    },
+    {
+      "parameters": {
+        "jsCode": "function chi2(a, b, c, d) {\n  const total = a + b + c + d;\n  const row1 = a + b;\n  const row2 = c + d;\n  const col1 = a + c;\n  const col2 = b + d;\n\n  const expectedA = (row1 * col1) / total;\n  const expectedB = (row1 * col2) / total;\n  const expectedC = (row2 * col1) / total;\n  const expectedD = (row2 * col2) / total;\n\n  if ([expectedA, expectedB, expectedC, expectedD].some(v => v === 0)) {\n    return null;\n  }\n\n  const chi2Stat =\n    ((a - expectedA) ** 2) / expectedA +\n    ((b - expectedB) ** 2) / expectedB +\n    ((c - expectedC) ** 2) / expectedC +\n    ((d - expectedD) ** 2) / expectedD;\n\n  return chi2Stat;\n}\n\nconst seuil = 0.5;\nconst data = items.map(item => item.json);\n\n// Liste des critères à tester\nconst criteres = ['nomChinois', 'specialiteOk', 'emplacementOk', 'decorOk', 'ratingOk', 'avisSuffisants'];\n\n// Calcul des chi2 par critère\nlet criteresSignificatifs = {};\n\ncriteres.forEach(critere => {\n  let a = 0, b = 0, c = 0, d = 0;\n\n  data.forEach(r => {\n    const vraiChinois = r.probabiliteVraiRestaurantChinois > seuil ? 1 : 0;\n    const critereActif = r.checks[critere] || 0;\n\n    if (critereActif === 1 && vraiChinois === 1) a++;\n    if (critereActif === 1 && vraiChinois === 0) b++;\n    if (critereActif === 0 && vraiChinois === 1) c++;\n    if (critereActif === 0 && vraiChinois === 0) d++;\n  });\n\n  const chi2Valeur = chi2(a, b, c, d);\n  criteresSignificatifs[critere] = chi2Valeur !== null && chi2Valeur > 3.84;\n});\n\n// Filtrage principal\nlet filtered = data.filter(r => {\n  if (r.probabiliteVraiRestaurantChinois <= seuil) return false;\n\n  const nom = (r.nom || '').toLowerCase();\n  const quartier = (r.quartier || '').toLowerCase();\n\n  // Exclure si nom contient \"bazar du quartier\" ou \"bazary\"\n  if (nom.includes(\"bazar du quartier\") || nom.includes(\"bazary\")) return false;\n  if (quartier.includes(\"bazary\")) return false;\n\n  // Compter le nombre de critères significatifs vrais\n  let count = 0;\n  criteres.forEach(critere => {\n    if (criteresSignificatifs[critere] && r.checks[critere] === 1) {\n      count++;\n    }\n  });\n\n  return count >= 1;\n});\n\nif (filtered.length < 20) {\n  const restSorted = data\n    .filter(r => !filtered.includes(r))\n    .filter(r => {\n      const nom = (r.nom || '').toLowerCase();\n      const quartier = (r.quartier || '').toLowerCase();\n      return !nom.includes(\"bazar du quartier\") && !nom.includes(\"bazary\") && !quartier.includes(\"bazary\");\n    })\n    .sort((a, b) => b.probabiliteVraiRestaurantChinois - a.probabiliteVraiRestaurantChinois);\n\n  filtered = filtered.concat(restSorted.slice(0, 26 - filtered.length));\n}\nfiltered = filtered.slice(0, 20);\n\n// Format final pour n8n\nreturn filtered.map(r => ({ json: r }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -820,
+        -580
+      ],
+      "id": "01b51669-45e9-4f21-ac67-30d1bc966d62",
+      "name": "Khi²"
+    },
+    {
+      "parameters": {
+        "jsCode": "function escapeHtml(text) {\n  if (typeof text !== 'string') return 'N/A';\n  return text\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&#39;');\n}\n\nconst restaurants = items.map(item => item.json);\n\nlet html = `\n<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n  <meta charset=\"UTF-8\" />\n  <title>Restaurants Chinois à Antananarivo</title>\n  <link href=\"https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap\" rel=\"stylesheet\" />\n  <link rel=\"stylesheet\" href=\"https://unpkg.com/leaflet@1.9.3/dist/leaflet.css\" />\n  <style>\n    body {\n      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n      /* Fond dégradé blanc vers beige */\n      background: linear-gradient(135deg, #ffffff 0%, #f5f0e6 100%);\n      margin: 40px;\n      color: #333;\n    }\n    h1 {\n      font-family: 'Playfair Display', serif;\n      font-size: 3rem;\n      text-align: center;\n      color: #a00000;\n      text-shadow: 1px 1px 4px rgba(160, 0, 0, 0.4);\n      margin-bottom: 30px;\n    }\n    #search {\n      display: block;\n      margin: 0 auto 40px auto;\n      width: 100%;\n      max-width: 400px;\n      padding: 12px 20px;\n      font-size: 16px;\n      border: 2px solid #b22222;\n      border-radius: 30px;\n      box-shadow: 0 2px 6px rgba(178,34,34,0.3);\n    }\n    .grid {\n      display: grid;\n      grid-template-columns: repeat(3, 1fr);\n      gap: 25px;\n      max-width: 1200px;\n      margin: 0 auto;\n    }\n    @media (max-width: 960px) {\n      .grid {\n        grid-template-columns: repeat(2, 1fr);\n      }\n    }\n    @media (max-width: 600px) {\n      .grid {\n        grid-template-columns: 1fr;\n      }\n    }\n    .restaurant {\n      background: #fff;\n      border-radius: 12px;\n      box-shadow: 0 4px 10px rgba(0,0,0,0.08);\n      overflow: hidden;\n    }\n    .restaurant img {\n      width: 100%;\n      height: 180px;\n      object-fit: cover;\n      border-bottom: 2px solid #b22222;\n    }\n    .info {\n      padding: 18px 20px;\n    }\n    .info p {\n      margin: 8px 0;\n      line-height: 1.3;\n    }\n    .info strong {\n      font-size: 20px;\n      color: #b22222;\n    }\n    .info em {\n      font-style: normal;\n      color: #666;\n      font-size: 14px;\n    }\n    #map {\n      height: 500px;\n      width: 100%;\n      margin: 40px auto;\n      max-width: 1200px;\n      border-radius: 12px;\n      border: 3px solid #a00000;\n    }\n    /* ---- Style 3D pour mini-cartes ---- */\n    .mini-map {\n      height: 150px;\n      width: 100%;\n      margin-top: 10px;\n      border-radius: 8px;\n      border: 1px solid #ccc;\n\n      /* Ombre portée pour effet profondeur */\n      box-shadow: 0 6px 15px rgba(160, 0, 0, 0.5);\n\n      /* Perspective + légère inclinaison */\n      transform: perspective(600px) rotateX(7deg);\n      transition: transform 0.3s ease;\n    }\n    .mini-map:hover {\n      /* Redresse la mini-carte au hover */\n      transform: perspective(600px) rotateX(0deg);\n    }\n  </style>\n</head>\n<body>\n  <h1>Restaurants Chinois à Antananarivo</h1>\n  <input type=\"search\" id=\"search\" placeholder=\"🔍 Rechercher un restaurant...\" />\n  <div id=\"map\"></div>\n  <div class=\"grid\" id=\"restaurantGrid\">\n`;\nfor (let i = 0; i < restaurants.length; i++) {\n  const r = restaurants[i];\n  const idMap = `miniMap${i}`;\n  html += `\n    <div class=\"restaurant\">\n      <img src=\"${escapeHtml(r.photo || '')}\" alt=\"photo de ${escapeHtml(r.nom || 'Restaurant')}\" />\n      <div class=\"info\">\n        <p><strong>${escapeHtml(r.nom || 'Nom inconnu')}</strong></p>\n        <p><em>${escapeHtml(r.specialite || 'Spécialité inconnue')}</em></p>\n        <p><strong>Adresse :</strong> ${escapeHtml(r.adresse || 'Adresse inconnue')}</p>  \n        <p><strong>Téléphone :</strong> ${escapeHtml(r.contact || 'Non disponible')}</p> \n        <p><strong>Site web :</strong> ${escapeHtml(r.site || 'Aucun site')}</p>          \n        <p><strong>Coordonnées GPS :</strong> ${escapeHtml(String(r.latitude || 'N/A'))}, ${escapeHtml(String(r.longitude || 'N/A'))}</p>\n        <div class=\"mini-map\" id=\"${idMap}\"></div>\n      </div>\n    </div>\n  `;\n}\n\n\nhtml += `\n  </div>\n\n  <script src=\"https://unpkg.com/leaflet@1.9.3/dist/leaflet.js\"></script>\n\n  <script>\n    const restaurants = ${JSON.stringify(restaurants)};\n\n    // Filtre recherche texte\n    document.getElementById(\"search\").addEventListener(\"input\", function() {\n      const query = this.value.toLowerCase();\n      const cards = document.querySelectorAll(\".restaurant\");\n      cards.forEach(card => {\n        const text = card.innerText.toLowerCase();\n        card.style.display = text.includes(query) ? \"block\" : \"none\";\n      });\n    });\n\n    // Marqueur custom rouge avec ombre\n    const redIcon = L.icon({\n      iconUrl: \"https://cdn-icons-png.flaticon.com/512/684/684908.png\",\n      iconSize: [40, 40],\n      iconAnchor: [20, 40],\n      popupAnchor: [0, -40],\n      shadowUrl: \"https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png\",\n      shadowSize: [41, 41],\n      shadowAnchor: [12, 41]\n    });\n\n    // Carte principale centrée sur Antananarivo\n    const mainMap = L.map(\"map\").setView([-18.9137, 47.5361], 13);\n    L.tileLayer(\"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png\", {\n      attribution: \"© OpenStreetMap contributors\"\n    }).addTo(mainMap);\n\n    restaurants.forEach((r, i) => {\n      if (r.latitude && r.longitude) {\n        // Marqueur sur la grande carte\n        L.marker([r.latitude, r.longitude]).addTo(mainMap).bindPopup(r.nom || \"Restaurant\");\n\n        // Mini-carte avec effet 3D et marqueur custom\n        const miniMapId = \"miniMap\" + i;\n        const miniMapDiv = document.getElementById(miniMapId);\n        if (miniMapDiv) {\n          const miniMap = L.map(miniMapId, {\n            center: [r.latitude, r.longitude],\n            zoom: 15,\n            zoomControl: false,\n            attributionControl: false,\n            dragging: true,\n            scrollWheelZoom: true,\n            doubleClickZoom: true,\n            boxZoom: false,\n            keyboard: false,\n          });\n          L.tileLayer(\"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png\").addTo(miniMap);\n          L.marker([r.latitude, r.longitude], { icon: redIcon }).addTo(miniMap);\n        }\n      }\n    });\n  </script>\n\n</body>\n</html>\n`;\n\nconst buffer = Buffer.from(html, \"utf8\");\n\nreturn [{\n  binary: {\n    data: {\n      data: buffer.toString(\"base64\"),\n      encoding: \"base64\",\n      mimeType: \"text/html\",\n      fileName: \"restaurants_chinois.html\",\n    },\n  },\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -580,
+        -480
+      ],
+      "id": "5b6f8b66-9c78-4b13-9a3a-f04100b37697",
+      "name": "fichier HTML"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Execute Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Command": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Extraction et CLassification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraction et CLassification": {
+      "main": [
+        [
+          {
+            "node": "Khi²",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Khi²": {
+      "main": [
+        [
+          {
+            "node": "fichier HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fichier HTML": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4bf0200d-a9d1-45e1-9784-fbe82ef8318a",
+  "meta": {
+    "instanceId": "aa98eaee356022d57626aa030476a794ed98cc8a65537041f00e1c078632fc7a"
+  },
+  "id": "Ibq4K2yi8EkCRlIs",
+  "tags": []
+}
