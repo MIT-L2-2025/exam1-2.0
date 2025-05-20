@@ -165,3 +165,7 @@ Une page **`restaurants.html`** est générée automatiquement et contient :
    ```bash
    npm install -g n8n
 
+2. Importer les workflw dans votre n8n , puis executez-les.
+
+#### Je vous remercie d'avoir lu jusqu'à la fin.
+
