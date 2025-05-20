@@ -1,6 +1,5 @@
-# Examen 1 – Version 2.0
 Liste des Restaurants Chinois à Antananarivo
-Introduction
+
 Ce projet permet d'identifier les vrais restaurants chinois authentiques à Antananarivo, Madagascar. En utilisant des données récupérées et un filtrage statistique, j’ai compilé une liste fiable de ces restaurants.
 Méthodologie
 
@@ -10,17 +9,10 @@ Traitement des données : J’ai développé un workflow de traitement qui :
 Applique un test de khi-deux (χ²) pour valider statistiquement la dépendance entre ces critères (ex. nom chinois et localisation).
 Filtre les restaurants pour ne garder que ceux identifiés comme authentiquement chinois.
 
-
-Résultat : Une liste finale de restaurants chinois authentiques.
-
 Structure du Projet
-
 data/: Contient les données brutes récupérées via SerpAPI (JSON).
 scripts/: Scripts de traitement et de filtrage (JavaScript, utilisés dans un workflow n8n).
 output/: Liste finale des restaurants chinois authentiques (JSON).
 
 Remarques
-
 Le test de khi-deux m’a permis de m’assurer que les critères de filtrage (comme le nom et la localisation) sont statistiquement fiables.
-Les données ont été collectées le 20 mai 2025 à 09:58 AM EAT.
-
