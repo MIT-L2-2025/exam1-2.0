@@ -49,7 +49,8 @@ Ce projet a pour but de **classifier automatiquement si un restaurant est chinoi
 
 ```python
 ["PHOTO_PLAT", "PHOTO_MENU", "PHOTO_LIEU"]
-```
+```![plat1](https://github.com/user-attachments/assets/93b2ac71-4f3c-411f-a3b0-1f6c8b80b07f)
+
 
 Basé sur la similarité avec les descriptions textuelles :
 
@@ -58,6 +59,7 @@ Basé sur la similarité avec les descriptions textuelles :
 ```
 
 #### ➤ b. 🉐 *Est-ce chinois ou non ?*
+![plat_chinois1](https://github.com/user-attachments/assets/d91e21a0-2fae-4102-ba21-6d827070f37a)
 
 * Pour chaque type, les libellés changent :
 
