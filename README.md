@@ -70,8 +70,8 @@ Tu peux l'ouvrir dans ton navigateur pour voir le résultat.
 
 Tu peux modifier :
 
-- La **liste des mots-clés chinois** dans le node "Code"
-- Le **design HTML** dans le node "Code1"
+- La **liste des mots-clés chinois** dans le node "Traitement_des_données"
+- Le **design HTML** dans le node "Génération_de_html"
 - Le **fichier de sortie** dans le node "Read/Write Files from Disk"
 
 ---
