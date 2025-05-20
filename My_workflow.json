@@ -1,0 +1,122 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        -140
+      ],
+      "id": "fc745907-c74a-4a37-acd9-818318a2b64b",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search.json?engine=google_maps&q=restaurant+chinois+antananarivo",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "restaurant chinois Antananarivo"
+            },
+            {
+              "name": "key",
+              "value": "f0e6bb4d0afbe2f2d22cea8afa975109bc22a9fde1612c54692859eee2751ad8"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -40,
+        20
+      ],
+      "id": "54115f3b-7a38-4afa-bc5a-88b3e50b91e2",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Récupère toutes les entrées depuis le nœud précédent\nconst items = $input.all();\n\n// Extraction des résultats Google Maps SerpApi\nconst results = [];\n\nfor (const item of items) {\n    const data = item.json;\n\n    // Accède à local_results et vérifie qu'il existe\n    if (data.local_results && Array.isArray(data.local_results)) {\n        for (const restaurant of data.local_results) {\n\n            const name = restaurant.title || \"Nom inconnu\";\n            const address = restaurant.address || \"Adresse inconnue\";\n            const contact = restaurant.phone || \"Contact non disponible\";\n\n            const lat = parseFloat(restaurant.gps_coordinates?.latitude);\n            const lng = parseFloat(restaurant.gps_coordinates?.longitude);\n\n            if (!isNaN(lat) && !isNaN(lng)) {\n                results.push({\n                    json: {\n                        name,\n                        address,\n                        contact,\n                        coordinates: {\n                            lat,\n                            lng\n                        }\n                    }\n                });\n            } else {\n                console.warn(\"Coordonnées invalides ignorées :\", name);\n            }\n        }\n    } else {\n        console.warn(\"Aucun résultat local trouvé\");\n    }\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        140,
+        -200
+      ],
+      "id": "de57b125-1fab-4799-b06b-6889dc20f0d8",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        360,
+        -200
+      ],
+      "id": "a8298e59-8746-41a8-a590-0c743137fa48",
+      "name": "Convert to File"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "43e79055-21b9-491b-9b30-22044c59c243",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "12dc2400c72eac72e4e0466e2a856160a685f65d22228bb64392d46975b95040"
+  },
+  "id": "VseDuqPgp6VHuSSf",
+  "tags": []
+}
