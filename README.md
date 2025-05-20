@@ -17,7 +17,7 @@ Le résultat final est une **page HTML** générée automatiquement, listant uni
 Premier wokflow : 
 ![Aperçu](My_workflow_1.png)
 Deuxième wokflow :
-![Aperçu](My_wokflow_2.png)
+![Aperçu](My_workflow_2.png)
 
 
 ## 🧠 Représentation : Graphe orienté
@@ -151,6 +151,8 @@ Une page **`restaurants.html`** est générée automatiquement et contient :
 - Une table filtrée
 - Une recherche intégrée
 - Des coordonnées GPS (le cas échéant)
+
+  Représentation de la page HTML : 
   ![Aperçu](Exemple_de_resultat.png)
 
 > Vous trouverez ce fichier HTML dans le répertoire d'exécution de **n8n**, après avoir lancé le **deuxième workflow**.
