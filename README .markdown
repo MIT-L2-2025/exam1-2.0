@@ -1,7 +1,6 @@
 # Analyse des Restaurants Chinois à Antananarivo
 
-## Aperçu
-Ce projet utilise n8n pour analyser 41 restaurants à Antananarivo, identifier ceux qui sont chinois avec un test statistique Khi-deux, et générer un rapport HTML interactif.
+Utilisation du n8n pour analyser 41 restaurants à Antananarivo, identification de ceux qui sont chinois avec un test statistique Khi-deux, et aussi générer un rapport HTML interactif.
 
 ## Fonctionnalités
 - **Collecte des données** : Liste de 41 restaurants avec nom, adresse, téléphone, type de cuisine, et menu.
