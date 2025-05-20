@@ -1,0 +1,126 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        260
+      ],
+      "id": "183d5ca2-096b-4ccd-aaed-2fa5e622db01",
+      "name": "Start"
+    },
+    {
+      "parameters": {
+        "url": "https://api.apify.com/v2/datasets/oadgYRWCp0mG1FAgw/items?format=json&clean=true",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -100,
+        60
+      ],
+      "id": "a168165b-4fba-41e5-ae41-38a2a6dbee78",
+      "name": "Request on apify"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const data = item.json;\n\n  return {\n    json: {\n      nom: data.title || \"Nom non disponible\",\n      lat: data.location?.lat || null,\n      lon: data.location?.lng || null,\n      source: \"aptify\",\n      address: data.address || null,\n      contact: data.phone || null,\n      lien_image3D: data.imageUrl || null,\n      specialité: data.categoryName || \"Spécialité non précisée\",\n      note: data.totalScore || undefined,\n      website: data.website || \"Site web Non disponible\"\n      }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        280
+      ],
+      "id": "e0709b64-c5cf-4338-bc67-f82ff4808513",
+      "name": "Extract data"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.filter(item => {\n  const text = `${item.json.specialité || \"\"} ${item.json.nom || \"\"}`.toLowerCase();\n  const note = item.json.note || 0;\n\n  const motsCles = [\"chinois\", \"chinese\"];\n  const contientMotCle = motsCles.some(mot => text.includes(mot));\n\n  return contientMotCle && note >= 4;\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        280,
+        60
+      ],
+      "id": "07768eef-4b7f-4bc9-81ae-c8c5712de994",
+      "name": "Filtrage"
+    },
+    {
+      "parameters": {
+        "jsCode": "const restaurants = $input.all().map(item => item.json);\n\nlet htmlContent = `\n<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <title>Restaurants Chinois à Antananarivo</title>\n    <link href=\"https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap\" rel=\"stylesheet\">\n    <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css\">\n    <style>\n        body { font-family: 'Poppins', sans-serif; margin: 0; background: #f4f8fb; color: #333; }\n        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }\n        h1 { text-align: center; font-size: 2.8em; color: #2d3e50; font-weight: 600; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 1px; }\n        .restaurant { background: #ffffff; border-radius: 20px; padding: 25px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform .3s, box-shadow .3s; }\n        .restaurant:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }\n        .restaurant h2 { color: #e91e63; font-size: 2.2em; margin-bottom: 15px; font-weight: 600; }\n        .restaurant p { margin: 10px 0; font-size: 1.1em; color: #555; line-height: 1.6; }\n        .restaurant p i { color: #00bcd4; margin-right: 12px; font-size: 1.3em; }\n        .restaurant img { width: 100%; height: auto; border-radius: 12px; margin-top: 20px; box-shadow: 0 3px 15px rgba(0,0,0,0.1); }\n        .route-button { display: inline-block; padding: 14px 28px; background: #ff5722; color: #fff; border: none; border-radius: 50px; font-size: 1.2em; text-align: center; transition: background .3s, transform .3s; }\n        .route-button:hover { background: #f44336; transform: translateY(-3px); }\n        .route-button:focus { outline: none; }\n        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }\n        @media (max-width: 768px) { .restaurant h2 { font-size: 1.8em; } .restaurant p { font-size: 1em; } }\n    </style>\n</head>\n<body>\n  <div class=\"container\">\n    <h1>Restaurants Chinois à Antananarivo</h1>\n`;\n\nrestaurants.forEach((r, i) => {\n  htmlContent += `\n    <div class=\"restaurant\">\n      <h2>${r.nom}</h2>\n      <p><i class=\"fas fa-map-marker-alt\"></i><strong>Adresse:</strong> ${r.address || 'Non renseignée'}</p>\n      <p><i class=\"fas fa-globe\"></i><strong>Coordonnées:</strong> (${r.lat};${r.lon})</p>\n      <p><i class=\"fas fa-phone\"></i><strong>Contact:</strong> ${r.contact || 'Non renseigné'}</p>\n      <p><i class=\"fas fa-utensils\"></i><strong>Spécialité:</strong> ${r.specialité}</p>\n      ${r.lien_image3D ? `<img src=\"${r.lien_image3D}\" alt=\"Façade de ${r.nom}\" />` : ''}\n    </div>\n  `;\n});\n\nhtmlContent += `\n  </div>\n  <script>\n    const mapData = ${JSON.stringify(restaurants.map(r => ({ lat: r.lat, lng: r.lon, name: r.nom })))};\n    const maps = [], directionsRenderers = [];\n  </script>\n</body>\n</html>\n`;\n\nreturn [{\n  json: { fileName: 'restaurants.html' },\n  binary: {\n    data: {\n      data: Buffer.from(htmlContent).toString('base64'),\n      mimeType: 'text/html',\n      fileName: 'restaurants.html'\n    }\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        300
+      ],
+      "id": "33323cb0-3ceb-4742-a9d3-1404eceab12f",
+      "name": "Generate HTML file"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Request on apify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Request on apify": {
+      "main": [
+        [
+          {
+            "node": "Extract data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract data": {
+      "main": [
+        [
+          {
+            "node": "Filtrage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrage": {
+      "main": [
+        [
+          {
+            "node": "Generate HTML file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "93b1e0cf-bd83-49c6-99ac-2b05305442e7",
+  "meta": {
+    "instanceId": "450605a0a319021c6355feebc8bda642f0fe715893da5b4eddff6cb54d819cbf"
+  },
+  "id": "uz2PrfU43JcYw5rO",
+  "tags": []
+}
