@@ -1,0 +1,154 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        -340
+      ],
+      "id": "9d8c961e-bd07-4bbe-ae4e-51bebe834af8",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Génère les valeurs de départ pour les pages : 0, 20, 40, ..., jusqu'à 100\nconst startValues = [];\nfor (let i = 0; i < 400; i += 20) {\n  startValues.push({ start: i });\n}\nreturn startValues;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        -340
+      ],
+      "id": "4510fb1a-c82d-4813-9d7a-73c58f2651c2",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search.json?engine=google_maps&q=restaurant+chinois+antananarivo",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "restaurant chinoix"
+            },
+            {
+              "name": "start",
+              "value": "={{$json[\"start\"]}}"
+            },
+            {
+              "name": "key",
+              "value": "f0bcf341c7c81230e8f61c37cb58c64ab3f1e96dabd8035098bba03167bc00de"
+            },
+            {
+              "name": "ll",
+              "value": "@-18.8792,47.5079,15z"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -260,
+        -340
+      ],
+      "id": "4f1a9040-6803-447d-b946-589f93c7bfa1",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "output = []\n\nfor item in items:\n    data = item.get(\"json\", {})\n    results = data.get(\"local_results\", [])\n\n    for place in results:\n        output.append({\n            \"json\": {\n                \"nom\": place.get(\"title\", \"Inconnu\"),\n                \"contact\": place.get(\"phone\", \"Aucun\"),\n                \"adresse\": place.get(\"address\", \"Inconnue\"),\n                \"latitude\": place.get(\"gps_coordinates\", {}).get(\"latitude\"),\n                \"longitude\": place.get(\"gps_coordinates\", {}).get(\"longitude\"),\n                \"specialite\": place.get(\"type\", \"Aucune\"),\n                \"photo\": place.get(\"thumbnail\"),\n                \"site\": place.get(\"website\", \"Aucun site\")\n            }\n        })\n\nreturn output\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -40,
+        -340
+      ],
+      "id": "8e67222d-8484-4d66-bb92-42e2c23b298d",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        180,
+        -340
+      ],
+      "id": "4c37afb6-055e-48f0-a046-6f7c733eb7a7",
+      "name": "Convert to File"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c81e7b8c-f4d0-4f37-89eb-19ae3f5bd69b",
+  "meta": {
+    "instanceId": "4d2fbc727d602cd52ac1840b8e99490e0a05a3a216261b237b33b43e655d7618"
+  },
+  "id": "jt5w1HPOBvuSzbJ0",
+  "tags": []
+}
