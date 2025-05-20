@@ -404,7 +404,7 @@ class ChineseRestaurantAnalyzer:
         sorted_restaurants = sorted(restaurant_scores.items(), key=lambda x: x[1], reverse=True)
         return sorted_restaurants[:top_n]
         
-    def run_analysis(self, save_path='chinese_restaurant_graph_dark.png'):
+    def run_analysis(self, save_path='analytical_graph.png'):
         """Run the full analysis and visualization pipeline."""
         if not self.restaurants:
             print("No restaurant data available. Analysis aborted.")
