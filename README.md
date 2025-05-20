@@ -79,7 +79,7 @@ Tu peux modifier :
 ## 📦 Exemple de node principal (Code JS)
 
 ```javascript
-const motsChinois = ["chinois", "wok", "dim sum", "canard laqué", ...];
+const motsChinois = ["chinois", "baguette", "wok", "dim sum", "canard laqué", ...];
 function compterMots(text) { ... }
 ...
 const pertinence_chinoise = Math.min(100, Math.round(chi2 * 10));
