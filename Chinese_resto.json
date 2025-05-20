@@ -1,0 +1,177 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -280,
+        240
+      ],
+      "id": "ad5e8f78-46d4-4057-9e21-adc4a0de77ab",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://api.apify.com/v2/datasets/esIkPtrAWDLBxr5JP/items?format=json&clean=true",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -80,
+        180
+      ],
+      "id": "0436798e-b9aa-4727-80d2-5e973054def6",
+      "name": "Request with api.apify.com"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const data = item.json;\n\n  return {\n    json: {\n      nom: data.title || \"Nom non disponible\",\n      lat: data.location?.lat || null,\n      lon: data.location?.lng || null,\n      source: \"aptify\",\n      address: data.address || null,\n      contact: data.phone || null,\n      lien_image3D: data.imageUrl || null,\n      specialité: data.categoryName || \"Spécialité non précisée\",\n      note: data.totalScore ?? null \n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        140,
+        240
+      ],
+      "id": "2c2d4073-6353-48db-a2f4-2803ab7ac47d",
+      "name": "Extract result 2",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const restaurants = $input.all().map(item => item.json);\n\nlet htmlContent = `\n<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n  <meta charset=\"UTF-8\" />\n  <title>Restaurants Chinois à Antananarivo</title>\n  <link href=\"https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap\" rel=\"stylesheet\">\n  <style>\n    body {\n      font-family: 'Roboto', sans-serif;\n      background: #f4f6f8;\n      color: #333;\n      margin: 0;\n      padding: 40px 20px;\n    }\n    h1 {\n      text-align: center;\n      font-size: 2.4em;\n      color: #e74c3c;\n      margin-bottom: 40px;\n    }\n    .container {\n      max-width: 900px;\n      margin: auto;\n    }\n    .restaurant {\n      background: white;\n      border-radius: 12px;\n      padding: 20px;\n      margin-bottom: 30px;\n      box-shadow: 0 4px 12px rgba(0,0,0,0.08);\n      transition: 0.3s;\n    }\n    .restaurant:hover {\n      transform: translateY(-5px);\n    }\n    .restaurant h2 {\n      margin: 0 0 10px;\n      color: #2c3e50;\n    }\n    .restaurant p {\n      margin: 6px 0;\n    }\n    .restaurant img {\n      max-width: 100%;\n      border-radius: 10px;\n      margin: 15px 0;\n    }\n    .coord {\n      font-size: 0.95em;\n      color: #666;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <h1>Restaurants Chinois à Antananarivo</h1>\n`;\n\nrestaurants.forEach(r => {\n  htmlContent += `\n    <div class=\"restaurant\">\n      <h2>${r.nom}</h2>\n      <p><strong>Adresse :</strong> ${r.address || 'Non disponible'}</p>\n      <p><strong>Contact :</strong> ${r.contact || 'Non disponible'}</p>\n      <p><strong>Spécialité :</strong> ${r.specialité || 'Non précisée'}</p>\n      <p><strong>Note :</strong> ${r.note || 'N/A'}</p>\n      <p class=\"coord\"><strong>Coordonnées :</strong> Latitude ${r.lat}, Longitude ${r.lon}</p>\n      ${r.lien_image3D ? `<img src=\"${r.lien_image3D}\" alt=\"Image de ${r.nom}\" />` : ''}\n    </div>\n  `;\n});\n\nhtmlContent += `\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: { fileName: 'restaurants_chinois.html' },\n  binary: {\n    data: {\n      data: Buffer.from(htmlContent).toString('base64'),\n      mimeType: 'text/html',\n      fileName: 'restaurants_chinois.html'\n    }\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        180
+      ],
+      "id": "fdab72b4-3963-4900-bbb2-8850104048ac",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.filter(item => {\n  const text = `${item.json.specialité || \"\"} ${item.json.nom || \"\"}`.toLowerCase();\n  const note = item.json.note || 0;\n\n  const motsCles = [\"chinois\", \"chinese\",\"chine\"];\n  const contientMotCle = motsCles.some(mot => text.includes(mot));\n\n  return contientMotCle && note >= 4;\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        140
+      ],
+      "id": "245eba5d-6df3-4927-9786-c454a5975aaf",
+      "name": "Filtrer data"
+    },
+    {
+      "parameters": {
+        "content": "HTTP Request:\nCollecte de données avec apify qui va donner une liste de restaurants chinois à Antananarivo et qu'on va filtrer après.  ",
+        "height": 420,
+        "width": 160
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        -20
+      ],
+      "id": "3a0df259-407b-438c-a475-f1f5ae1e4e9f",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "Extract result:\nIci, on collecte seulement les lignes qui nous interesse parmi les données fournie par apify dont:nom, coordonées, contact, spécialité, ...",
+        "height": 420,
+        "width": 180
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        120,
+        60
+      ],
+      "id": "56d516e3-86a1-4dbc-832c-a186066c2dbb",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "Filter data:\nLe rôle de cette noeud est de filtrer la liste de restaurants qu'on a pour récupérer seulement ce qui sont vraiement restaurant chinois selon quelques critères qu'on a définie...\nEntrée: 85 restaurants(apify)\nSortie : 22 restaurants(après filtrage)",
+        "height": 500,
+        "width": 200
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        340,
+        -120
+      ],
+      "id": "f24bb5b2-f4c4-429f-bae7-20ae23add6ee",
+      "name": "Sticky Note2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Request with api.apify.com",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Request with api.apify.com": {
+      "main": [
+        [
+          {
+            "node": "Extract result 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract result 2": {
+      "main": [
+        [
+          {
+            "node": "Filtrer data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        []
+      ]
+    },
+    "Filtrer data": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0353bb0b-c292-4433-a20d-f091f8312494",
+  "meta": {
+    "instanceId": "b34161ab7e7eb1159f0182b0d9dc7add3c5a397fd68dcb1bc6ff92092f1b92f9"
+  },
+  "id": "eT4BUuktXdUyE7kE",
+  "tags": []
+}
