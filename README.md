@@ -46,10 +46,10 @@ Ce projet a pour but de **classifier automatiquement si un restaurant est chinoi
 * Deux étapes de classification :
 
 #### ➤ a. 📸 *Type de photo* :
+![plat1](https://github.com/user-attachments/assets/4b0824e0-1c63-4a23-8515-27ae7d490eb4)
 
 ```python
 ["PHOTO_PLAT", "PHOTO_MENU", "PHOTO_LIEU"]
-```![plat1](https://github.com/user-attachments/assets/93b2ac71-4f3c-411f-a3b0-1f6c8b80b07f)
 
 
 Basé sur la similarité avec les descriptions textuelles :
