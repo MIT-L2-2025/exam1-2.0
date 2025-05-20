@@ -77,7 +77,6 @@ Ce workflow peut être utile pour :
 
 ---
 
-## 📷 Capture d'écran (optionnel)
+## 📷 Exemple d'affichage
+![Affichage](exemple.png)
 
-```html
-<!-- Tu peux insérer une capture d’écran ici ou héberger l'image sur imgur -->
