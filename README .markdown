@@ -1,16 +1,35 @@
-### -Analyse des Restaurants Chinois à Antananarivo
+# Analyse des Restaurants Chinois à Antananarivo
 
-
-Utilisation d'un flux de travail n8n pour analyser et lister les restaurants chinois à Antananarivo.Collection des données sur 41 restaurants chinois, calcule la probabilité qu'ils soient chinois, et effectue un test statistique Khi-deux, mais aussi:génère un rapport HTML interactif.
+## Aperçu
+Ce projet utilise n8n pour analyser 41 restaurants à Antananarivo, identifier ceux qui sont chinois avec un test statistique Khi-deux, et générer un rapport HTML interactif.
 
 ## Fonctionnalités
-- **Données** : Liste de 41 restaurants chinois avec nom, adresse, type de cuisine, menu, téléphone, et URL d'image.
-- **Analyse** : Calcule une probabilité (en %) qu'un restaurant soit chinois basée sur des critères comme le nom, le menu, et la présence de caractères chinois.
-- **Statistiques** : Test Khi-deux pour évaluer la corrélation entre les caractéristiques chinoises et la classification.
-- **Sortie** : Génère un fichier HTML (`Chinese_restaurants_antananarivo.html`) avec une liste des restaurants probables (probabilité > 70 %), leurs détails, et des liens Google Maps.
+- **Collecte des données** : Liste de 41 restaurants avec nom, adresse, téléphone, type de cuisine, et menu.
+- **Analyse statistique** : Calcul de la probabilité qu’un restaurant soit chinois et test Khi-deux pour vérifier la corrélation.
+- **Sortie HTML** : Page web avec une liste des restaurants probables, leurs détails, et des liens Google Maps.
+
+## Structure du Workflow
+- **Function - Données Restaurants** : Fournit les données des restaurants.
+- **Function - Calcul Probabilité** : Calcule la probabilité et prépare le test Khi-deux.
+- **Function - Générer HTML** : Crée le contenu HTML.
+- **Debug Binary Data** : Vérifie les données binaires.
+- **Output HTML** : Affiche le HTML pour copie manuelle.
 
 ## Résultats
-- **Restaurants analysés** : 41
-- **Restaurants probables chinois** : 26 (probabilité > 70 %)
-- **Probabilité moyenne** : 90 %
-- **Test Khi-deux** : Valeur = 2.99, p = 0.776 (aucune corrélation significative).
+- Fichier : `chinese_restaurants_antananarivo.html`
+- Affiche les restaurants avec une probabilité > 70% d’être chinois, avec statistiques et tableau Khi-deux.
+
+## Prérequis
+- n8n (version récente, installé via Docker).
+- Navigateur web pour visualiser le HTML.
+
+## Utilisation
+1. Importer `workflow.json` dans n8n.
+2. Exécuter le workflow.
+3. Copier la valeur `html_output` depuis le nœud **Output HTML**.
+4. Sauvegarder comme `chinese_restaurants_antananarivo.html` et ouvrir dans un navigateur.
+
+## Notes
+- Le workflow utilise des données statiques pour éviter les API payantes.
+- Les images sont hébergées sur Unsplash (connexion Internet requise).
+- Exécuté dans un conteneur Docker, avec sortie manuelle du HTML.
