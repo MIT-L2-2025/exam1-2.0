@@ -1,0 +1,641 @@
+{
+  "name": "Restaurant chinois collecte de donnée",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2320,
+        480
+      ],
+      "id": "0aaa0d2a-48a2-4da9-a5d0-0123764f8ac7",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://api.apify.com/v2/datasets/1OT57kkZzh97HyxSD/items?format=json&clean=true",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2180,
+        120
+      ],
+      "id": "19489c96-fe0f-4c38-a937-55bd5ba3ed62",
+      "name": "Collecter les données sur Apify"
+    },
+    {
+      "parameters": {
+        "url": "=https://maps.googleapis.com/maps/api/place/details/json?place_id={{$json[\"placeId\"]}}&fields=name,photos&key=AIzaSyDEPRHKae22_Hc2HnHqRvKocXKYeQRiXpw",
+        "responseFormat": "string",
+        "options": {}
+      },
+      "name": "Colletcter les liens des images des restos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        -2040,
+        480
+      ],
+      "id": "1eaa9ddd-0e92-428f-aac0-ac50a120275e"
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = \"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=\";\nconst key = \"AIzaSyDEPRHKae22_Hc2HnHqRvKocXKYeQRiXpw\"; // Remplace par ta vraie clé\n\nlet t = 0;\n\n// On suppose que le premier nœud (avec title, address, etc.) est référencé via $items(\"PremierNoeud\")[index]\nreturn items.map((item, index) => {\n  const result = item.json.data?.result || {};\n  const photos = result.photos || [];\n  t += 1;\n\n  const firstNodeData = $items(\"Collecter les données sur Apify\", 0)[index].json;\n\n  const output = {\n    id: t,\n    name: firstNodeData.title || result.name || \"Sans nom\",\n    address: firstNodeData.address || result.formatted_address || \"\",\n    phone: firstNodeData.phone || result.formatted_phone_number || \"\",\n    latitude: firstNodeData.location?.lat || result.geometry?.location?.lat,\n    longitude: firstNodeData.location?.lng || result.geometry?.location?.lng\n  };\n\n  // Ajouter les photos du deuxième nœud\n  photos.forEach((p, index) => {\n    output[`photo${index + 1}`] = `${base}${p.photo_reference}&key=${key}`;\n  });\n\n  return { json: output };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1920,
+        120
+      ],
+      "id": "080a47a4-9056-49f7-95a6-968ed5ba8f50",
+      "name": "Garder seulement les données nécessaire"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const json = item.json;\n\n  // On extrait toutes les clés qui commencent par \"photo\" et qui ne sont pas vides\n  const photoUrls = Object\n    .keys(json)\n    .filter(key => key.startsWith('photo') && key !== 'photoUrls' && json[key])\n    .map(key => json[key]);\n\n  // On crée un nouveau JSON sans les clés photo1, photo2, etc.\n  const filteredJson = Object\n    .keys(json)\n    .filter(key => !key.startsWith('photo') || key === 'photoUrls')\n    .reduce((obj, key) => {\n      obj[key] = json[key];\n      return obj;\n    }, {});\n\n  // On ajoute photoUrls au JSON filtré\n  filteredJson.photoUrls = photoUrls;\n\n  // On retourne le nouvel item\n  return {\n    json: filteredJson,\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1780,
+        480
+      ],
+      "id": "87dca07c-944c-45cb-9eef-7e313f0295ee",
+      "name": "creation de photoUrls"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "name": "Replace Me1",
+      "typeVersion": 1,
+      "position": [
+        -1200,
+        520
+      ],
+      "id": "24732e49-879d-4811-b74c-2cf0dfff1dec"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.cloudinary.com/v1_//image/destroy",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"public_id\": \"resto/image1_xyz123\",\n  \"signature\": \"<signature>\",\n  \"api_key\": \"<your_api_key>\",\n  \"timestamp\": <current_unix_timestamp>\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -880,
+        -440
+      ],
+      "id": "53f31bef-fe64-42d4-b577-9093f25e21ff",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.cloudinary.com/v1_1/dtbhizyfe/image/upload",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file",
+              "value": "={{ $json.photoUrl }}"
+            },
+            {
+              "name": "upload_preset",
+              "value": "resto_chinois_devoir"
+            },
+            {
+              "name": "folder",
+              "value": "resto"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -820,
+        360
+      ],
+      "id": "cf4a7d29-5291-499d-9059-1e98868f7ca2",
+      "name": "Upload les images dans Cloud"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        -600,
+        360
+      ],
+      "id": "80ca7971-a22d-4f81-9d93-653639adfd8e",
+      "name": "Merge"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "name": "Replace Me",
+      "typeVersion": 1,
+      "position": [
+        -460,
+        20
+      ],
+      "id": "74d136af-03b8-4163-9670-b052ea80e768"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1000,
+        0
+      ],
+      "id": "47e47059-9d14-4f27-b6c5-ed3396d44d93",
+      "name": "loop pour sauvegrader les données restaurants dans PostGreSQL"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const json = item.json;\n  const photoUrls = json.photoUrls || [];\n  \n  // Créer un item pour les métadonnées du restaurant\n  const restaurantItem = {\n    json: {\n      type: 'restaurant',\n      id: json.id,\n      name: json.name,\n      address: json.address,\n      phone: json.phone,\n      latitude: json.latitude,\n      longitude: json.longitude\n    }\n  };\n  \n  // Créer un item pour chaque photo\n  const photoItems = photoUrls.map((url, index) => ({\n    json: {\n      type: 'photo',\n      restaurantId: json.id,\n      photoUrl: url,\n      photoIndex: index\n    }\n  }));\n  \n  return [restaurantItem, ...photoItems];\n}).flat();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1680,
+        80
+      ],
+      "id": "892e11a2-a4e4-4bc6-a886-db86f9b5aab7",
+      "name": "Separation entre 2 types: info et Photos",
+      "alwaysOutputData": false,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b56d2df5-1923-4e3e-9961-39b499421e27",
+              "leftValue": "={{ $json.type }}",
+              "rightValue": "restaurant",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1360,
+        280
+      ],
+      "id": "93b5986f-b88c-4de8-8fe6-ea4c87423bc1",
+      "name": "If pour separer info et photos qu on va enregistrer"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Configurez ici l'index de départ\nconst START_FROM = 405; // Commence à 0 pour photo #1\n\nreturn $input.all().slice(START_FROM).map((item, index) => ({\n  json: {\n    ...item.json,\n    // Ajoutez un marqueur de position réel\n    _originalIndex: START_FROM + index + 1 // +1 car slice() commence à START_FROM\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1360,
+        -40
+      ],
+      "id": "4b890b34-bd53-42a1-9a66-310f946ff2cf",
+      "name": "Pour commencer là où ça  s est arreté"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://badulrbhoetmvovqbnpx.supabase.co/rest/v1/restaurants",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhZHVscmJob2V0bXZvdnFibnB4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2NzI0NTMsImV4cCI6MjA2MzI0ODQ1M30.MqUfnMwJ8Zl25accgakp9453TFW74MLtOZQiqMazlhE"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhZHVscmJob2V0bXZvdnFibnB4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2NzI0NTMsImV4cCI6MjA2MzI0ODQ1M30.MqUfnMwJ8Zl25accgakp9453TFW74MLtOZQiqMazlhE"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{$json.requestBody}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -620,
+        20
+      ],
+      "id": "c731b911-7132-44cb-abcf-59af130a5714",
+      "name": "Postgre Supabase"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://badulrbhoetmvovqbnpx.supabase.co/rest/v1/photos",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhZHVscmJob2V0bXZvdnFibnB4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2NzI0NTMsImV4cCI6MjA2MzI0ODQ1M30.MqUfnMwJ8Zl25accgakp9453TFW74MLtOZQiqMazlhE"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhZHVscmJob2V0bXZvdnFibnB4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2NzI0NTMsImV4cCI6MjA2MzI0ODQ1M30.MqUfnMwJ8Zl25accgakp9453TFW74MLtOZQiqMazlhE"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{$json.requestBody}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -600,
+        540
+      ],
+      "id": "3f3d8be4-c655-4c2c-9ab6-dac247ad7efd",
+      "name": "PostgreSupabase"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3c41c2ab-9d23-43f2-8e40-ecddfd83dd5e",
+              "name": "signature",
+              "value": "={{ $json.signature }}",
+              "type": "string"
+            },
+            {
+              "id": "6b2310ec-8fdf-43f8-b989-a86f1fc8a472",
+              "name": "width",
+              "value": "={{ $json.width }}",
+              "type": "number"
+            },
+            {
+              "id": "c105572e-0e18-40da-a403-590114365c83",
+              "name": "height",
+              "value": "={{ $json.height }}",
+              "type": "number"
+            },
+            {
+              "id": "06abcff0-c13d-443d-becb-0c2a8bda5c67",
+              "name": "url",
+              "value": "={{ $json.secure_url }}",
+              "type": "string"
+            },
+            {
+              "id": "e3e3cb5d-b54b-4ccd-a2f9-d3a8fb565151",
+              "name": "restaurantId",
+              "value": "={{ $json.restaurantId }}",
+              "type": "string"
+            },
+            {
+              "id": "b3460833-8e47-47c1-b230-21fb4d524508",
+              "name": "photoIndex",
+              "value": "={{ $json.photoIndex }}",
+              "type": "number"
+            },
+            {
+              "id": "837efe09-6475-4a4e-a58e-75b864cf5f4a",
+              "name": "public_id",
+              "value": "={{ $json.public_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1020,
+        540
+      ],
+      "id": "2f23da51-eb43-4f75-bf1f-51f08da237cb",
+      "name": "Garder seulement les infos à mettre dans la base de donnée"
+    },
+    {
+      "parameters": {
+        "jsCode": "const photo = $input.item.json;\n\n// Vérification des types\nconst payload = {\n  restaurantid: parseInt(photo.restaurantId), // Notez le nom exact\n  photoindex: photo.photoIndex || 0, // Respectez la casse\n  public_id: photo.public_id,\n  url: photo.url,\n  width: parseInt(photo.width),\n  height: parseInt(photo.height),\n  signature: photo.signature\n};\n\n// Validation supplémentaire\nif (isNaN(payload.restaurantid)) {\n  throw new Error(`Invalid restaurantId: ${photo.restaurantId}`);\n}\n\nreturn {\n  json: {\n    requestBody: JSON.stringify(payload),\n    _metadata: {\n      originalData: photo,\n      timestamp: new Date().toISOString()\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        540
+      ],
+      "id": "77bce053-0006-488c-932d-f0f045c8a5a7",
+      "name": "Transforme les requetes en string pour supabase"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1080,
+        340
+      ],
+      "id": "c82b780b-95de-42a0-b7eb-9dfc801a1fe0",
+      "name": "loop Enregistrement de des photos de chaque resto"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Transforme UN SEUL restaurant à la fois\nconst restaurant = $input.item.json;\n\n// Solution robuste avec gestion d'erreur\ntry {\n  return {\n    json: {\n      // Metadata pour tracking\n      _restaurantId: restaurant.id,\n      _processedAt: new Date().toISOString(),\n      \n      // Body formaté pour Supabase\n      requestPayload: {\n        id: restaurant.id,\n        type: restaurant.type || 'restaurant',\n        name: restaurant.name,\n        address: restaurant.address,\n        phone: restaurant.phone,\n        latitude: restaurant.latitude,\n        longitude: restaurant.longitude\n      },\n      \n      // Version stringifiée pour l'envoi\n      requestBody: JSON.stringify({\n        id: restaurant.id,\n        type: restaurant.type || 'restaurant',\n        name: restaurant.name,\n        address: restaurant.address,\n        phone: restaurant.phone,\n        latitude: restaurant.latitude,\n        longitude: restaurant.longitude\n      }, null, 2) // Pretty print pour le debug\n    }\n  };\n} catch (error) {\n  return {\n    json: {\n      _error: `JSON formatting failed: ${error.message}`,\n      _rawInput: restaurant\n    }\n  };\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        20
+      ],
+      "id": "de545120-6668-43bc-89e9-72d14b492943",
+      "name": "transforme les requetes en string pour Postgre"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Collecter les données sur Apify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collecter les données sur Apify": {
+      "main": [
+        [
+          {
+            "node": "Colletcter les liens des images des restos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Colletcter les liens des images des restos": {
+      "main": [
+        [
+          {
+            "node": "Garder seulement les données nécessaire",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Garder seulement les données nécessaire": {
+      "main": [
+        [
+          {
+            "node": "creation de photoUrls",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "creation de photoUrls": {
+      "main": [
+        [
+          {
+            "node": "Separation entre 2 types: info et Photos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replace Me1": {
+      "main": [
+        [
+          {
+            "node": "loop Enregistrement de des photos de chaque resto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload les images dans Cloud": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Garder seulement les infos à mettre dans la base de donnée",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replace Me": {
+      "main": [
+        [
+          {
+            "node": "loop pour sauvegrader les données restaurants dans PostGreSQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "loop pour sauvegrader les données restaurants dans PostGreSQL": {
+      "main": [
+        [],
+        [
+          {
+            "node": "transforme les requetes en string pour Postgre",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separation entre 2 types: info et Photos": {
+      "main": [
+        [
+          {
+            "node": "If pour separer info et photos qu on va enregistrer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If pour separer info et photos qu on va enregistrer": {
+      "main": [
+        [
+          {
+            "node": "loop pour sauvegrader les données restaurants dans PostGreSQL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "loop Enregistrement de des photos de chaque resto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pour commencer là où ça  s est arreté": {
+      "main": [
+        []
+      ]
+    },
+    "Postgre Supabase": {
+      "main": [
+        [
+          {
+            "node": "Replace Me",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSupabase": {
+      "main": [
+        [
+          {
+            "node": "Replace Me1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Garder seulement les infos à mettre dans la base de donnée": {
+      "main": [
+        [
+          {
+            "node": "Transforme les requetes en string pour supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transforme les requetes en string pour supabase": {
+      "main": [
+        [
+          {
+            "node": "PostgreSupabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "loop Enregistrement de des photos de chaque resto": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Upload les images dans Cloud",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "transforme les requetes en string pour Postgre": {
+      "main": [
+        [
+          {
+            "node": "Postgre Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b28f9211-bc58-465f-8142-bcb86aaf834c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "22512dc53930be3cf53447faf8986e0d413e50eb896da31018ab8f94220ed4d3"
+  },
+  "id": "akTAzTtzfTsqHbES",
+  "tags": []
+}
