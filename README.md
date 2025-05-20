@@ -26,7 +26,7 @@ Ce workflow **n8n** permet d'extraire automatiquement des données depuis l'API 
    - Ceux ayant une **note ≥ 4**.
 
 5. **🖥️ Génération d’une page HTML stylisée**  
-   Le nœud `Code2` génère une page `restaurants.html` contenant :
+   Le nœud `Generate HTML` génère une page `restaurants.html` contenant :
    - Une carte stylisée de chaque restaurant.
    - Une mise en page responsive, moderne et épurée.
    - Utilisation de Google Fonts, Font Awesome, animations CSS.
@@ -66,14 +66,6 @@ Ce workflow peut être utile pour :
 - Mettre à jour automatiquement une page web répertoriant les meilleurs restaurants chinois à Antananarivo
 - Intégrer dans un projet de tourisme ou guide culinaire
 - Générer des documents statiques à partager
-
----
-
-## 🧠 Astuces
-
-- Tu peux modifier le filtre pour inclure d’autres types de cuisines.
-- Ajoute un nœud `Google Maps Static API` ou Leaflet si tu veux inclure une vraie carte.
-- Intègre un `Email node` pour envoyer le fichier HTML automatiquement.
 
 ---
 
