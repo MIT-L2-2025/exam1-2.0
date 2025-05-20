@@ -1,0 +1,5 @@
+# Graphe : Nœuds = [Nom, Décor, Menu, Avis]
+# Arêtes = [(Menu, Avis, 0.7), (Nom, Décor, 0.5), (Menu, Décor, 0.4), (Avis, Décor, 0.3)]
+with open("graphe_structure.txt", "w") as f:
+    f.write("Nœuds : Nom, Décor, Menu, Avis\n")
+    f.write("Arêtes : \n- Menu → Avis (0.7)\n- Nom → Décor (0.6)\n- Menu → Décor (0.8)\n- Avis → Décor (0.4)")
