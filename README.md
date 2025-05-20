@@ -17,6 +17,8 @@ voilà le deuxième aperçu du workflow 2 .
 
 Et voici la sortie en fichier.HTML
 
+![Aperçu](ListeRestaurant.png)
+
 ![Aperçu](ExempleRestaurants.png)
 
 
