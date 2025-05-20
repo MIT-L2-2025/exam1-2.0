@@ -158,4 +158,3 @@ Une page **`restaurants.html`** est générée automatiquement et contient :
    ```bash
    npm install -g n8n
 
-
