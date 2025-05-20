@@ -13,6 +13,10 @@ A la fin on note chaque restos /10 et donne le pourcentage si il est vraiment ch
 
 le fichier html contient le resultat final
 
-Comme d'habitude vous devez se connecter à serpApi.com pour pouvoir executer ces scripts sinon ça ne marcherais pas
+Comme d'habitude vous devez se connecter à serpApi.com 
+
+
+![Aperçu](Capture d’écran du 2025-05-20 08-19-30.png)
+![Aperçu](Capture d’écran du 2025-05-20 08-21-59.png)
 
 
