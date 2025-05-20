@@ -1,0 +1,232 @@
+{
+  "name": "workflow_resto.json",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1400,
+        40
+      ],
+      "id": "bf288763-0b4e-4055-9e3b-083430250f3e",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://api.apify.com/v2/datasets/Z9IpJXqEdDD7u2Wtl/items?clean=true&format=json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1180,
+        40
+      ],
+      "id": "6a932c07-c6fc-4a17-a634-c292e7c01772",
+      "name": "Apify pour tous les resto chinois de Tan.a"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7e752422-2a02-4ae6-a5a7-9e09da62b892",
+              "name": "Name",
+              "value": "={{ $json[\"title\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "e2cc87bc-baad-42bd-a441-4a897d7692d6",
+              "name": "Speciality",
+              "value": "={{ $json[\"categoryName\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "b7404a60-8012-48ce-ac2f-372a0d7f5396",
+              "name": "Address",
+              "value": "={{ $json[\"address\"]  || \"Adresse indisponible\"}}",
+              "type": "string"
+            },
+            {
+              "id": "2e0d1141-7edc-41a6-8366-1de5177ccac4",
+              "name": "Phone",
+              "value": "={{ $json[\"phone\"] || \"contact indisponible\"}}",
+              "type": "string"
+            },
+            {
+              "id": "ea133097-94e3-4073-bc7c-1f121a3ed013",
+              "name": "lat",
+              "value": "=  {{ $json[\"location\"][\"lat\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "d8d2e2be-f5df-4d48-9c59-f3473a6ca195",
+              "name": "lng",
+              "value": "={{ $json[\"location\"][\"lng\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "379c5e67-4635-4c45-a2f2-d8c345c15dbd",
+              "name": "images",
+              "value": "={{ $json[\"imageUrl\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "55fe5d32-7442-4199-94a6-d4a74ab5dadb",
+              "name": "maps",
+              "value": "={{ $json[\"url\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "0f3af14f-6546-4802-9e53-fcc04d3313de",
+              "name": "avis",
+              "value": "={{ $json[\"avis\"]}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1440,
+        280
+      ],
+      "id": "74274aff-b9b9-4679-a796-a769651fb565",
+      "name": "Info(name,spc,adress,images,url..)"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const reviews = item.json.reviews || [];\n  const avisFusionnes = reviews.map(r => r.text).filter(Boolean).join('\\n---\\n');\n\n  return {\n    json: {\n      ...item.json,\n      avis: avisFusionnes || \"Aucun avis\"\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -960,
+        40
+      ],
+      "id": "164356a4-7757-4e57-88ae-736f1a599721",
+      "name": "ajouter un champ avis"
+    },
+    {
+      "parameters": {
+        "jsCode": "let body = '';\nitems.forEach(item => {\n  if(item.json.htmlResto){\n    body += item.json.htmlResto;\n  }\n});\n\nconst htmlComplet = `\n<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n  <meta charset=\"UTF-8\" />\n  <title>Liste des Restaurants Chinois</title>\n  <style>\n    body { font-family: Arial, sans-serif; background-color: #f3f4f6; padding: 20px; }\n    .restaurant { background: white; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }\n    h2 { color: #d42c2c; margin-top: 0; }\n    .score { font-weight: bold; color: green; }\n  </style>\n</head>\n<body>\n  <h1>🍜 Restaurants Chinois - Score de Pertinence</h1>\n  ${body}\n</body>\n</html>\n`;\n\n// Conversion en base64\nconst buffer = Buffer.from(htmlComplet, 'utf8').toString('base64');\n\nreturn [{\n  json: {},\n  binary: {\n    data: {\n      data: buffer,\n      mimeType: 'text/html',\n      fileName: 'Resto_chinois_Tana.html',\n    }\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -780,
+        280
+      ],
+      "id": "862d24fc-7635-4f6c-9c2c-770860591959",
+      "name": "Regrouper html "
+    },
+    {
+      "parameters": {
+        "jsCode": "function containsKeywords(text, keywords) {\n  const lowerText = text.toLowerCase();\n  return keywords.some(kw => lowerText.includes(kw.toLowerCase()));\n}\n\nconst kwStrong = [\"chine\", \"chinese\", \"chinois\", \"china\",\"mandarin\",\"shanghai\"];\nconst kwMedium = [\"asia\", \"asiatique\", \"orient\", \"oriental\"];\nconst chineseChars = /[\\u4e00-\\u9fff]/; // caractères chinois\n\nreturn items.map(item => {\n  let score = 0;\n\n  const nom = item.json.Name || \"\";\n  const speciality = item.json.Speciality || \"\";\n  const avis = item.json.avis || \"\";\n\n  // Score basé sur le nom\n  if (containsKeywords(nom, kwStrong) || chineseChars.test(nom)) {\n    score += 4;\n  } else if (containsKeywords(nom, kwMedium)) {\n    score += 2;\n  }\n\n  // Score basé sur la spécialité\n  if (containsKeywords(speciality, kwStrong) || chineseChars.test(speciality)) {\n    score += 3;\n  } else if (containsKeywords(speciality, kwMedium)) {\n    score += 2;\n  }\n\n  // Score basé sur les avis (nouvelle règle)\n  if (containsKeywords(avis, kwStrong) || chineseChars.test(avis)) {\n    score += 3;\n  }\n\n  return {\n    json: {\n      ...item.json,\n      scoreChinois: score\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1220,
+        280
+      ],
+      "id": "25b463d3-1c64-4088-a180-a209a4b8002e",
+      "name": "calcul score"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const j = item.json;\n  const scorePourcent = Math.round((j.scoreChinois / 10) * 100);\n\n  const html = `\n    <div class=\"restaurant\" style=\"display: flex; justify-content: space-between; gap: 20px; align-items: flex-start;\">\n      <div style=\"flex: 1;\">\n        <h2>${j.Name || \"Sans nom\"}</h2>\n        <p><strong>Spécialité:</strong> ${j.Speciality || \"Non précisé\"}</p>\n        <p><strong>Téléphone:</strong> ${j.phone || \"Non disponible\"}</p>\n        <p><strong>Adresse:</strong> ${j.address || \"Non disponible\"}</p>\n        <p><strong>Latitude:</strong> ${j.lat || \"?\"}</p>\n        <p><strong>Longitude:</strong> ${j.lng || \"?\"}</p>\n        <p><a href=\"https://www.google.com/maps/search/?api=1&query=${j.lat},${j.lng}\" target=\"_blank\">📍 Voir sur Google Maps</a></p>\n        <p class=\"score\">Score chinois: ${scorePourcent}%</p>\n      </div>\n      <div style=\"flex-shrink: 0;\">\n        ${j.images ? `<img src=\"${j.images}\" alt=\"Photo de ${j.Name}\" style=\"max-width: 200px; border-radius: 8px;\" />` : \"\"}\n      </div>\n    </div>\n  `;\n\n  return { json: { htmlResto: html } };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1000,
+        280
+      ],
+      "id": "35ebb511-0b9b-429c-b5ba-d9bfe4fa5254",
+      "name": "html "
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Apify pour tous les resto chinois de Tan.a",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apify pour tous les resto chinois de Tan.a": {
+      "main": [
+        [
+          {
+            "node": "ajouter un champ avis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Info(name,spc,adress,images,url..)": {
+      "main": [
+        [
+          {
+            "node": "calcul score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ajouter un champ avis": {
+      "main": [
+        [
+          {
+            "node": "Info(name,spc,adress,images,url..)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "calcul score": {
+      "main": [
+        [
+          {
+            "node": "html ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "html ": {
+      "main": [
+        [
+          {
+            "node": "Regrouper html ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "bd592b1b-4172-4d99-9bac-db82ff20f824",
+  "meta": {
+    "instanceId": "15a0dd310fd911b8ff2709a5a22d6f0bbc7961f5a47a716d65ccb2e43395c050"
+  },
+  "id": "gNeNg6XxZOEkFnXW",
+  "tags": []
+}
