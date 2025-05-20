@@ -16,7 +16,6 @@ le fichier html contient le resultat final
 Comme d'habitude vous devez se connecter à serpApi.com 
 
 
-![Aperçu](Capture d’écran du 2025-05-20 08-19-30.png)
-![Aperçu](Capture d’écran du 2025-05-20 08-21-59.png)
+
 
 
