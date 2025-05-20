@@ -1,0 +1,127 @@
+{
+  "name": "restau2",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "fedabd13-3f4e-4741-8222-c1ccd85889b7",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/home/emiliah/Documents/file.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        220,
+        -120
+      ],
+      "id": "4e262f71-9733-490f-8a84-e46031fc58ba",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Vérifie le contenu de l'entrée\nconst file = $input.item.binary?.data;\n\nif (!file) \n{\n  throw new Error('Fichier binaire introuvable. Assurez-vous que le champ \"data\" existe.');\n}\n\n// Décodage base64\nconst buffer = Buffer.from(file.data, 'base64');\nconst content = buffer.toString('utf8');\n\nlet parsed;\ntry \n{\n  parsed = JSON.parse(content);\n} \ncatch (e) \n{\n  throw new Error('Erreur de parsing JSON : ' + e.message);\n}\n\n// Retourne chaque restaurant comme un item séparé\nreturn Array.isArray(parsed)\n  ? parsed.map(r => ({ json: r }))\n  : parsed.restaurants && Array.isArray(parsed.restaurants)\n    ? parsed.restaurants.map(r => ({ json: r }))\n    : [{ json: parsed }];"
+      },
+      "id": "15307039-5587-4b4f-a58f-dbc55987d57a",
+      "name": "binary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Récupérer les données d'entrée\nconst inputData = $input.all();\n\n// Liste des quartiers à forte population chinoise\nconst chineseAreas = [\n  \"behoririka\",\n  \"ankorondrano\",\n  \"ivandry\",\n  \"antsakaviro\",\n  \"analakely\",\n  \"ambodifilaho\"\n];\n\n// Mots-clés pour identifier un restaurant chinois dans le nom\nconst chineseKeywords = [\n  \"chine\",\n  \"chinois\",\n  \"china\",\n  \"chinese\",\n  \"dynastie\",\n  \"shandong\",\n  \"saigon\",\n  \"orient\",\n  \"dragon\",\n  \"muraille\",\n  \"jonquille\",\n  \"fleur\",\n  \"bol\",\n  \"eurasie\"\n];\n\n// Mots-clés pour identifier une cuisine chinoise dans les avis\nconst chineseCuisineKeywords = [\n  \"dim sum\",\n  \"nouilles\",\n  \"canard laqué\",\n  \"porc aigre-doux\",\n  \"riz cantonais\",\n  \"poulet général tao\",\n  \"tofu mapo\",\n  \"wonton\",\n  \"raviolis chinois\",\n  \"baozi\",\n  \"authentique chinois\"\n];\n\n// Plages de coordonnées pour les quartiers chinois (approximation basée sur Antananarivo)\nconst chineseAreaCoords = [\n  { name: \"behoririka\", latRange: [-18.91, -18.87], lonRange: [47.50, 47.54] },\n  { name: \"ankorondrano\", latRange: [-18.89, -18.85], lonRange: [47.51, 47.55] },\n  { name: \"ivandry\", latRange: [-18.89, -18.85], lonRange: [47.53, 47.57] }\n];\n\n// Poids pour le calcul de la probabilité\nconst weights = {\n  hasChineseName: 0.3, // 30%\n  isInChineseAreaByAddress: 0.2, // 20%\n  isInChineseAreaByCoords: 0.15, // 15%\n  hasChineseCuisine: 0.2, // 20%\n  hasChineseReviews: 0.1, // 10%\n  hasChineseMenuLanguage: 0.05, // 5% (placeholder)\n  hasChineseDecor: 0.0 // 0% (placeholder, pas de données)\n};\n\n// Seuil de probabilité pour considérer un restaurant comme authentiquement chinois\nconst probabilityThreshold = 0.6; // 60%\n\n// Initialiser un tableau pour stocker les résultats\nlet results = [];\n\n// Parcourir chaque élément des données\nfor (let item of inputData) {\n  // Vérifications\n  const nom = item.json.nom ? item.json.nom.toLowerCase() : \"\";\n  const hasChineseName = chineseKeywords.some(keyword => nom.includes(keyword.toLowerCase()));\n\n  const adresse = item.json.adresse ? item.json.adresse.toLowerCase() : \"\";\n  const isInChineseAreaByAddress = chineseAreas.some(area => adresse.includes(area.toLowerCase()));\n\n  const latitude = parseFloat(item.json.latitude) || 0;\n  const longitude = parseFloat(item.json.longitude) || 0;\n  const isInChineseAreaByCoords = chineseAreaCoords.some(area => \n    latitude >= area.latRange[0] && latitude <= area.latRange[1] &&\n    longitude >= area.lonRange[0] && longitude <= area.lonRange[1]\n  );\n\n  // Vérification du type de cuisine (via API Google Places)\n  const hasChineseCuisine = item.json.types && Array.isArray(item.json.types) && item.json.types.includes(\"chinese_restaurant\");\n\n  // Analyser les avis pour des mentions de cuisine chinoise\n  const reviews = item.json.reviews && Array.isArray(item.json.reviews) ? item.json.reviews : [];\n  const hasChineseReviews = reviews.some(review => {\n    const reviewText = review.text ? review.text.toLowerCase() : \"\";\n    return chineseCuisineKeywords.some(keyword => reviewText.includes(keyword.toLowerCase()));\n  });\n\n  // Placeholder pour la langue du menu et le décor\n  const hasChineseMenuLanguage = false; // À valider avec une API ou texte du menu\n  const hasChineseDecor = false; // À valider avec des photos ou descriptions\n\n  // Nouvelle condition : détecter les caractères chinois ou variantes explicites de \"chine\"\n  const hasChineseCharacters = /[\\u4E00-\\u9FFF]/.test(nom); // Détecte les sinogrammes chinois\n  const hasExplicitChinese = chineseKeywords.some(keyword => {\n    const regex = new RegExp(`\\\\b${keyword}\\\\b`, 'i'); // Mot entier, insensible à la casse\n    return regex.test(nom);\n  });\n\n  // Calcul de la probabilité ou priorité\n  let probability = 0;\n  let isChineseRestaurant = false;\n\n  // Condition prioritaire : si caractères chinois ou \"chine\" explicite, marquer directement\n  if (hasChineseCharacters || hasExplicitChinese) {\n    isChineseRestaurant = true;\n    probability = 1.0; // Probabilité maximale\n  } else {\n    // Calcul de la probabilité basée sur les autres critères\n    if (hasChineseName) probability += weights.hasChineseName;\n    if (isInChineseAreaByAddress) probability += weights.isInChineseAreaByAddress;\n    if (isInChineseAreaByCoords) probability += weights.isInChineseAreaByCoords;\n    if (hasChineseCuisine) probability += weights.hasChineseCuisine;\n    if (hasChineseReviews) probability += weights.hasChineseReviews;\n    if (hasChineseMenuLanguage) probability += weights.hasChineseMenuLanguage;\n    if (hasChineseDecor) probability += weights.hasChineseDecor;\n\n    isChineseRestaurant = probability >= probabilityThreshold;\n  }\n\n  // Ajouter au résultat si considéré comme chinois\n  if (isChineseRestaurant) {\n    results.push({\n      json: {\n        ...item.json,\n        isChineseRestaurant: isChineseRestaurant,\n        probability: probability.toFixed(2), // Probabilité arrondie à 2 décimales\n        checks: {\n          hasChineseName: hasChineseName,\n          isInChineseAreaByAddress: isInChineseAreaByAddress,\n          isInChineseAreaByCoords: isInChineseAreaByCoords,\n          hasChineseCuisine: hasChineseCuisine,\n          hasChineseReviews: hasChineseReviews,\n          hasChineseMenuLanguage: hasChineseMenuLanguage,\n          hasChineseDecor: hasChineseDecor,\n          hasChineseCharacters: hasChineseCharacters,\n          hasExplicitChinese: hasExplicitChinese\n        }\n      }\n    });\n  }\n}\n\n// Retourner les résultats\nreturn results;"
+      },
+      "id": "0a26aa23-5bc9-49e9-a936-dd4a614a13ac",
+      "name": "filtrage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Fonction pour échapper les données et éviter les attaques XSS\nconst escapeHtml = (unsafe) => {\n  if (typeof unsafe !== 'string') return 'Non disponible';\n  return unsafe\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&#039;');\n};\n\n// Récupérer et valider les données d'entrée\nlet restaurants = [];\ntry {\n  restaurants = $input.all().map(item => item.json).filter(r => r && typeof r === 'object');\n  if (restaurants.length === 0) {\n    throw new Error('Aucune donnée de restaurant valide trouvée.');\n  }\n} catch (error) {\n  return [{\n    json: { error: 'Erreur lors de la récupération des données', message: error.message },\n  }];\n}\n\n// Générer le contenu HTML\nlet htmlContent = `\n  <!DOCTYPE html>\n  <html lang=\"fr\">\n  <head>\n      <meta charset=\"UTF-8\">\n      <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n      <title>Liste des Restaurants</title>\n      <link rel=\"stylesheet\" href=\"https://unpkg.com/leaflet@1.9.4/dist/leaflet.css\" />\n      <style>\n          body {\n              font-family: 'Segoe UI', Arial, sans-serif;\n              margin: 0;\n              padding: 20px;\n              background-color: #f4f4f9;\n          }\n          .container {\n              max-width: 900px;\n              margin: auto;\n              padding: 20px;\n              background: #fff;\n              border-radius: 10px;\n              box-shadow: 0 4px 12px rgba(0,0,0,0.1);\n          }\n          .restaurant {\n              border: 1px solid #e0e0e0;\n              padding: 20px;\n              margin-bottom: 20px;\n              border-radius: 8px;\n              transition: transform 0.2s, box-shadow 0.2s;\n          }\n          .restaurant:hover {\n              transform: translateY(-5px);\n              box-shadow: 0 6px 16px rgba(0,0,0,0.15);\n          }\n          img {\n              max-width: 100%;\n              height: auto;\n              border-radius: 5px;\n              margin-top: 10px;\n          }\n          h1 {\n              text-align: center;\n              color: #333;\n          }\n          h2 {\n              margin-top: 0;\n              color: #2c3e50;\n          }\n          .map {\n              height: 200px;\n              width: 100%;\n              margin-top: 10px;\n              border-radius: 5px;\n          }\n          a {\n              color: #007bff;\n              text-decoration: none;\n          }\n          a:hover {\n              text-decoration: underline;\n          }\n          @media (max-width: 600px) {\n              .container { padding: 10px; }\n              .restaurant { padding: 15px; }\n          }\n      </style>\n  </head>\n  <body>\n      <div class=\"container\">\n          <h1>Liste des Restaurants</h1>\n`;\n\n// Ajouter les restaurants\nrestaurants.forEach((restaurant, index) => {\n  const nom = escapeHtml(restaurant.nom || 'Nom inconnu');\n  const contact = escapeHtml(restaurant.contact || 'Non disponible');\n  const adresse = escapeHtml(restaurant.adresse || 'Non disponible');\n  const specialite = escapeHtml(restaurant.specialite || 'Non disponible');\n  const photo = restaurant.photo && restaurant.photo !== 'Pas de photo disponible'\n    ? escapeHtml(restaurant.photo)\n    : 'https://via.placeholder.com/400';\n  const latitude = parseFloat(restaurant.latitude) || null;\n  const longitude = parseFloat(restaurant.longitude) || null;\n\n  htmlContent += `\n    <div class=\"restaurant\">\n        <h2>${nom}</h2>\n        <p><strong>Téléphone :</strong> ${contact}</p>\n        <p><strong>Adresse :</strong> ${adresse}</p>\n        <p><strong>Spécialité :</strong> ${specialite}</p>\n        <p><strong>Coordonnées :</strong><br>\n            ${latitude && longitude ? `\n                Latitude ${latitude}, Longitude ${longitude}<br>\n                <a href=\"https://www.google.com/maps?q=&layer=c&cbll=${latitude},${longitude}\" target=\"_blank\">\n                  🌐 Voir en vue immersive (Street View)\n                </a>\n            ` : 'Non disponible'}\n        </p>\n        <img src=\"${photo}\" alt=\"Photo de ${nom}\">\n        ${latitude && longitude ? `\n          <div id=\"map-${index}\" class=\"map\"></div>\n        ` : ''}\n    </div>\n  `;\n});\n\n// Ajouter le script pour initialiser les cartes\nhtmlContent += `\n      </div>\n      <script src=\"https://unpkg.com/leaflet@1.9.4/dist/leaflet.js\"></script>\n      <script>\n          document.addEventListener('DOMContentLoaded', () => {\n              ${restaurants.map((restaurant, index) => {\n                const latitude = parseFloat(restaurant.latitude) || null;\n                const longitude = parseFloat(restaurant.longitude) || null;\n                if (latitude && longitude) {\n                  return `\n                    var map = L.map('map-${index}').setView([${latitude}, ${longitude}], 13);\n                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {\n                        attribution: '&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>'\n                    }).addTo(map);\n                    L.marker([${latitude}, ${longitude}]).addTo(map)\n                        .bindPopup('${escapeHtml(restaurant.nom || 'Restaurant')}');\n                  `;\n                }\n                return '';\n              }).join('')}\n          });\n      </script>\n  </body>\n  </html>\n`;\n\n// Retourner le résultat\nreturn [{\n  json: { fileName: 'restaurants.html' },\n  binary: {\n    data: {\n      data: Buffer.from(htmlContent).toString('base64'),\n      mimeType: 'text/html',\n      fileName: 'restaurants.html'\n    }\n  }\n}];\n"
+      },
+      "id": "fd317bd5-9495-4e20-81f5-3b2434d29fe2",
+      "name": "affichage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        180
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "binary": {
+      "main": [
+        [
+          {
+            "node": "filtrage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filtrage": {
+      "main": [
+        [
+          {
+            "node": "affichage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b1afe8bb-235c-4983-8efa-8e55a13abcc9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "625f09f8eeaa98e8522e94bab42106747fb1bccf30b68bba43d0cbef588c89f7"
+  },
+  "id": "VQ47UrgV1mwUf7n4",
+  "tags": []
+}

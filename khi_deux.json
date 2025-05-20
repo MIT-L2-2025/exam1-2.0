@@ -1,0 +1,156 @@
+{
+  "name": "khi deux",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "c546b865-815b-4bae-81b2-07ec65a0d11b",
+      "name": "When clicking ‘Test workflow’",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "fileSelector": "/home/emiliah/Documents/file.json",
+        "options": {}
+      },
+      "id": "d8f3e8b2-efb4-476d-88c4-2ff0c4056140",
+      "name": "Read/Write Files from Disk",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        360,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const file = $input.item.binary.data;\n\nif (!file) {\n  console.log('Fichier binaire introuvable.');\n}\n\nconst buffer = Buffer.from(file.data, 'base64');\nconst content = buffer.toString('utf8');\n\nlet parsed;\nparsed = JSON.parse(content);\n\nif (Array.isArray(parsed)) {\n  return parsed.map(item => ({ json: item }));\n}\n\nif (parsed.restaurants && Array.isArray(parsed.restaurants)) {\n  return parsed.restaurants.map(item => ({ json: item }));\n}\n\nreturn [{ json: parsed }];"
+      },
+      "id": "7520a1e9-e657-4868-8160-55071dc8afdf",
+      "name": "Binaire",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const escapeHtml = (unsafe) => {\n  if (typeof unsafe !== 'string') return 'Non disponible';\n  return unsafe\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&#039;');\n};\n\nlet restaurants = [];\ntry {\n  restaurants = $input.all().map(item => item.json).filter(r => r && typeof r === 'object');\n  if (restaurants.length === 0) {\n    throw new Error\n      ('Aucune donnée de restaurant valide trouvée.');\n  }\n} \ncatch (error) {\n  return [{\n    json: { error: 'Erreur lors de la récupération des données', message: error.message },\n  }];\n}\n\nlet htmlContent = `\n  <!DOCTYPE html>\n  <html lang=\"fr\">\n  <head>\n      <meta charset=\"UTF-8\">\n      <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n      <title>Découvrez Nos Restaurants</title>\n      <link rel=\"stylesheet\" href=\"https://unpkg.com/leaflet@1.9.4/dist/leaflet.css\" />\n      <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css\" />\n      <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap\">\n      <style>\n          :root {\n              --primary: #ff6b6b;\n              --secondary: #4ecdc4;\n              --dark: #2d3436;\n              --light: #f9f9f9;\n              --shadow: 0 8px 30px rgba(0,0,0,0.12);\n              --radius: 12px;\n          }\n          \n          body {\n              font-family: 'Poppins', sans-serif;\n              margin: 0;\n              padding: 0;\n              background-color: #f8f9fa;\n              color: #333;\n          }\n          \n          .hero {\n              background: linear-gradient(135deg, var(--primary), #ff8e8e);\n              color: white;\n              padding: 6rem 2rem;\n              text-align: center;\n              position: relative;\n              overflow: hidden;\n          }\n          \n          .hero::before {\n              content: '';\n              position: absolute;\n              top: 0;\n              left: 0;\n              right: 0;\n              bottom: 0;\n              background: url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80') no-repeat center center;\n              background-size: cover;\n              opacity: 0.15;\n              z-index: 0;\n          }\n          \n          .hero-content {\n              position: relative;\n              z-index: 1;\n              max-width: 800px;\n              margin: 0 auto;\n          }\n          \n          h1 {\n              font-size: 3.5rem;\n              margin-bottom: 1rem;\n              font-weight: 700;\n              text-shadow: 0 2px 10px rgba(0,0,0,0.1);\n          }\n          \n          .subtitle {\n              font-size: 1.4rem;\n              margin-bottom: 2rem;\n              font-weight: 300;\n          }\n          \n          .container {\n              max-width: 1200px;\n              margin: -60px auto 60px;\n              padding: 0 20px;\n              position: relative;\n              z-index: 2;\n          }\n          \n          .restaurants-grid {\n              display: grid;\n              grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));\n              gap: 30px;\n              margin-top: 20px;\n          }\n          \n          .restaurant-card {\n              background: white;\n              border-radius: var(--radius);\n              overflow: hidden;\n              box-shadow: var(--shadow);\n              transition: all 0.3s ease;\n          }\n          \n          .restaurant-card:hover {\n              transform: translateY(-10px);\n              box-shadow: 0 15px 35px rgba(0,0,0,0.15);\n          }\n          \n          .card-image {\n              height: 200px;\n              overflow: hidden;\n              position: relative;\n          }\n          \n          .card-image img {\n              width: 100%;\n              height: 100%;\n              object-fit: cover;\n              transition: transform 0.5s ease;\n          }\n          \n          .restaurant-card:hover .card-image img {\n              transform: scale(1.1);\n          }\n          \n          .restaurant-type {\n              position: absolute;\n              top: 15px;\n              right: 15px;\n              background: var(--primary);\n              color: white;\n              padding: 5px 15px;\n              border-radius: 30px;\n              font-size: 0.8rem;\n              font-weight: 500;\n              text-transform: uppercase;\n              letter-spacing: 0.5px;\n              box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);\n          }\n          \n          .card-content {\n              padding: 25px;\n          }\n          \n          .card-title {\n              font-size: 1.5rem;\n              margin: 0 0 10px;\n              color: var(--dark);\n              font-weight: 600;\n          }\n          \n          .card-info {\n              margin-bottom: 20px;\n          }\n          \n          .info-item {\n              display: flex;\n              align-items: center;\n              margin-bottom: 10px;\n              color: #666;\n          }\n          \n          .info-item i {\n              color: var(--primary);\n              margin-right: 10px;\n              width: 18px;\n              text-align: center;\n          }\n          \n          .card-footer {\n              display: flex;\n              justify-content: space-between;\n              padding-top: 15px;\n              border-top: 1px solid #eee;\n          }\n          \n          .view-button {\n              display: inline-block;\n              padding: 8px 20px;\n              background: linear-gradient(135deg, var(--primary), #ff8e8e);\n              color: white;\n              border-radius: 30px;\n              text-decoration: none;\n              font-weight: 500;\n              transition: all 0.3s;\n              box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);\n          }\n          \n          .view-button:hover {\n              transform: translateY(-2px);\n              box-shadow: 0 6px 15px rgba(255, 107, 107, 0.4);\n          }\n          \n          .streetview-link {\n              display: flex;\n              align-items: center;\n              color: var(--secondary);\n              text-decoration: none;\n              font-weight: 500;\n          }\n          \n          .streetview-link i {\n              margin-right: 5px;\n          }\n          \n          .streetview-link:hover {\n              text-decoration: underline;\n          }\n          \n          .map {\n              height: 150px;\n              width: 100%;\n              border-radius: 8px;\n              margin-top: 15px;\n              overflow: hidden;\n              border: 3px solid #fff;\n              box-shadow: 0 4px 15px rgba(0,0,0,0.1);\n          }\n          \n          @media (max-width: 768px) {\n              .restaurants-grid {\n                  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));\n              }\n              \n              h1 {\n                  font-size: 2.5rem;\n              }\n              \n              .subtitle {\n                  font-size: 1.1rem;\n              }\n              \n              .hero {\n                  padding: 4rem 1rem;\n              }\n              \n              .container {\n                  padding: 0 15px;\n              }\n          }\n          \n          @media (max-width: 480px) {\n              .restaurants-grid {\n                  grid-template-columns: 1fr;\n              }\n              \n              .card-image {\n                  height: 180px;\n              }\n              \n              h1 {\n                  font-size: 2rem;\n              }\n          }\n          \n          .back-to-top {\n              position: fixed;\n              bottom: 30px;\n              right: 30px;\n              background: var(--primary);\n              color: white;\n              width: 50px;\n              height: 50px;\n              border-radius: 50%;\n              display: flex;\n              align-items: center;\n              justify-content: center;\n              text-decoration: none;\n              box-shadow: 0 5px 15px rgba(0,0,0,0.2);\n              opacity: 0;\n              visibility: hidden;\n              transition: all 0.3s;\n          }\n          \n          .back-to-top.visible {\n              opacity: 1;\n              visibility: visible;\n          }\n          \n          .back-to-top:hover {\n              transform: translateY(-5px);\n          }\n          \n          .loading {\n              text-align: center;\n              padding: 40px;\n              font-size: 1.2rem;\n              color: #666;\n          }\n      </style>\n  </head>\n  <body>\n      <div class=\"hero\">\n          <div class=\"hero-content\">\n              <h1>Listes des restaurants chinois d'Antananarivo</h1>\n          </div>\n      </div>\n      \n      <div class=\"container\">\n          <div class=\"restaurants-grid\">\n`;\n\nrestaurants.forEach((restaurant, index) => {\n  const nom = escapeHtml(restaurant.nom || 'Nom inconnu');\n  const contact = escapeHtml(restaurant.contact || 'Non disponible');\n  const adresse = escapeHtml(restaurant.adresse || 'Non disponible');\n  const specialite = escapeHtml(restaurant.specialite || 'Non disponible');\n  const photo = restaurant.photo && restaurant.photo !== 'Pas de photo disponible'\n    ? escapeHtml(restaurant.photo)\n    : 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';\n  const latitude = parseFloat(restaurant.latitude) || null;\n  const longitude = parseFloat(restaurant.longitude) || null;\n\n  htmlContent += `\n    <div class=\"restaurant-card\">\n        <div class=\"card-image\">\n            <img src=\"${photo}\" alt=\"${nom}\" loading=\"lazy\">\n            <div class=\"restaurant-type\">${specialite.split(',')[0] || 'Restaurant'}</div>\n        </div>\n        <div class=\"card-content\">\n            <h2 class=\"card-title\">${nom}</h2>\n            <div class=\"card-info\">\n                <div class=\"info-item\">\n                    <i class=\"fas fa-phone\"></i>\n                    <span>${contact}</span>\n                </div>\n                <div class=\"info-item\">\n                    <i class=\"fas fa-map-marker-alt\"></i>\n                    <span>${adresse}</span>\n                </div>\n                <div class=\"info-item\">\n                    <i class=\"fas fa-utensils\"></i>\n                    <span>${specialite}</span>\n                </div>\n            </div>\n            ${latitude && longitude ? `\n                <div id=\"map-${index}\" class=\"map\"></div>\n                <div class=\"card-footer\">\n                    <a href=\"https://www.google.com/maps?q=&layer=c&cbll=${latitude},${longitude}\" target=\"_blank\" class=\"streetview-link\">\n                        <i class=\"fas fa-street-view\"></i> Voir en Street View\n                    </a>\n                    <a href=\"#\" class=\"view-button\" onclick=\"expandMap(${index}); return false;\">Voir la carte</a>\n                </div>\n            ` : ''}\n        </div>\n    </div>\n  `;\n});\n\nhtmlContent += `\n          </div>\n      </div>\n      \n      <a href=\"#\" class=\"back-to-top\" id=\"backToTop\">\n          <i class=\"fas fa-arrow-up\"></i>\n      </a>\n\n      <script src=\"https://unpkg.com/leaflet@1.9.4/dist/leaflet.js\"></script>\n      <script>\n          document.addEventListener('DOMContentLoaded', () => {\n              // Initialiser les cartes\n              ${restaurants.map((restaurant, index) => {\n                const latitude = parseFloat(restaurant.latitude) || null;\n                const longitude = parseFloat(restaurant.longitude) || null;\n                if (latitude && longitude) {\n                  return `\n                    var map${index} = L.map('map-${index}').setView([${latitude}, ${longitude}], 14);\n                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {\n                        attribution: '&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>'\n                    }).addTo(map${index});\n                    L.marker([${latitude}, ${longitude}])\n                      .addTo(map${index})\n                      .bindPopup('<strong>${escapeHtml(restaurant.nom || 'Restaurant')}</strong><br>${escapeHtml(restaurant.adresse || '')}');\n                  `;\n                }\n                return '';\n              }).join('')}\n              \n              // Bouton retour en haut\n              const backToTop = document.getElementById('backToTop');\n              window.addEventListener('scroll', () => {\n                  if (window.pageYOffset > 300) {\n                      backToTop.classList.add('visible');\n                  } else {\n                      backToTop.classList.remove('visible');\n                  }\n              });\n              \n              backToTop.addEventListener('click', (e) => {\n                  e.preventDefault();\n                  window.scrollTo({ top: 0, behavior: 'smooth' });\n              });\n          });\n          \n          // Fonction pour agrandir la carte\n          function expandMap(index) {\n              const mapElement = document.getElementById('map-' + index);\n              if (mapElement.style.height === '300px') {\n                  mapElement.style.height = '150px';\n              } else {\n                  mapElement.style.height = '300px';\n                  // Forcer le redimensionnement de la carte Leaflet\n                  window['map' + index].invalidateSize();\n              }\n          }\n      </script>\n  </body>\n  </html>\n`;\n\nreturn [{\n  json: { fileName: 'restaurants.html' },\n  binary: {\n    data: {\n      data: Buffer.from(htmlContent).toString('base64'),\n      mimeType: 'text/html',\n      fileName: 'restaurants.html'\n    }\n  }\n}];"
+      },
+      "id": "5f399040-2ec3-4b19-8b98-09fee6530da3",
+      "name": "affichage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        1040
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputData = $input.all();\n\nconst chineseAreas = [\n  \"behoririka\",\n  \"ankorondrano\",\n  \"ivandry\",\n  \"antsakaviro\",\n  \"analakely\",\n  \"ambodifilaho\"\n];\n\nconst chineseKeywords = [\n  \"chine\",\n  \"chinois\",\n  \"china\",\n  \"chinese\",\n  \"dynastie\",\n  \"shandong\",\n  \"saigon\",\n  \"orient\",\n  \"dragon\",\n  \"muraille\",\n  \"jonquille\",\n  \"fleur\",\n  \"bol\",\n  \"eurasie\"\n];\n\nconst chineseCuisineKeywords = [\n  \"dim sum\",\n  \"nouilles\",\n  \"canard laqué\",\n  \"porc aigre-doux\",\n  \"riz cantonais\",\n  \"poulet général tao\",\n  \"tofu mapo\",\n  \"wonton\",\n  \"raviolis chinois\",\n  \"baozi\",\n  \"authentique chinois\"\n];\n\nconst chineseAreaCoords = [\n  { name: \"behoririka\", latRange: [-18.91, -18.87], lonRange: [47.50, 47.54] },\n  { name: \"ankorondrano\", latRange: [-18.89, -18.85], lonRange: [47.51, 47.55] },\n  { name: \"ivandry\", latRange: [-18.89, -18.85], lonRange: [47.53, 47.57] }\n];\n\nlet chineseNameAndInArea = 0, chineseNameNotInArea = 0, notChineseNameInArea = 0, notChineseNameNotInArea = 0;\nlet hasCuisineAndInArea = 0, hasCuisineNotInArea = 0, notCuisineInArea = 0, notCuisineNotInArea = 0;\n\nfor (let item of inputData) {\n  const nom = item.json.nom ? item.json.nom.toLowerCase() : \"\";\n  const hasChineseName = chineseKeywords.some(keyword => nom.includes(keyword.toLowerCase()));\n\n  const adresse = item.json.adresse ? item.json.adresse.toLowerCase() : \"\";\n  const isInChineseAreaByAddress = chineseAreas.some(area => adresse.includes(area.toLowerCase()));\n\n  const latitude = parseFloat(item.json.latitude) || 0;\n  const longitude = parseFloat(item.json.longitude) || 0;\n  const isInChineseAreaByCoords = chineseAreaCoords.some(area => \n    latitude >= area.latRange[0] && latitude <= area.latRange[1] &&\n    longitude >= area.lonRange[0] && longitude <= area.lonRange[1]\n  );\n  const isInChineseArea = isInChineseAreaByAddress || isInChineseAreaByCoords;\n\n  const hasChineseCuisine = item.json.types && Array.isArray(item.json.types) && item.json.types.includes(\"chinese\" || \"Asian\" || \"Mandarin\");\n\n  const reviews = item.json.reviews && Array.isArray(item.json.reviews) ? item.json.reviews : [];\n  const hasChineseReviews = reviews.some(review => {\n    const reviewText = review.text ? review.text.toLowerCase() : \"\";\n    return chineseCuisineKeywords.some(keyword => reviewText.includes(keyword.toLowerCase()));\n  });\n\n  if (hasChineseName && isInChineseArea) \n    chineseNameAndInArea++;\n  else if (hasChineseName && !isInChineseArea) \n    chineseNameNotInArea++;\n  else if (!hasChineseName && isInChineseArea) \n    notChineseNameInArea++;\n  else notChineseNameNotInArea++;\n\n  if (hasChineseCuisine && isInChineseArea) \n    hasCuisineAndInArea++;\n  else if (hasChineseCuisine && !isInChineseArea) \n    hasCuisineNotInArea++;\n  else if (!hasChineseCuisine && isInChineseArea) \n    notCuisineInArea++;\n  else notCuisineNotInArea++;\n}\n\nconst totalChineseName = chineseNameAndInArea + chineseNameNotInArea;\nconst totalNotChineseName = notChineseNameInArea + notChineseNameNotInArea;\nconst totalInArea = chineseNameAndInArea + notChineseNameInArea;\nconst totalNotInArea = chineseNameNotInArea + notChineseNameNotInArea;\nconst total = totalChineseName + totalNotChineseName;\n\nconst totalCuisine = hasCuisineAndInArea + hasCuisineNotInArea;\nconst totalNotCuisine = notCuisineInArea + notCuisineNotInArea;\n\nconst expectedChineseNameAndInArea = total > 0 ? (totalChineseName * totalInArea) / total : 0;\nconst expectedChineseNameNotInArea = total > 0 ? (totalChineseName * totalNotInArea) / total : 0;\nconst expectedNotChineseNameInArea = total > 0 ? (totalNotChineseName * totalInArea) / total : 0;\nconst expectedNotChineseNameNotInArea = total > 0 ? (totalNotChineseName * totalNotInArea) / total : 0;\n\nconst expectedCuisineAndInArea = total > 0 ? (totalCuisine * totalInArea) / total : 0;\nconst expectedCuisineNotInArea = total > 0 ? (totalCuisine * totalNotInArea) / total : 0;\nconst expectedNotCuisineInArea = total > 0 ? (totalNotCuisine * totalInArea) / total : 0;\nconst expectedNotCuisineNotInArea = total > 0 ? (totalNotCuisine * totalNotInArea) / total : 0;\n\n// Calculer la statistique χ²\nlet chiSquareName = 0;\nif (expectedChineseNameAndInArea > 0) chiSquareName += Math.pow(chineseNameAndInArea - expectedChineseNameAndInArea, 2) / expectedChineseNameAndInArea;\nif (expectedChineseNameNotInArea > 0) chiSquareName += Math.pow(chineseNameNotInArea - expectedChineseNameNotInArea, 2) / expectedChineseNameNotInArea;\nif (expectedNotChineseNameInArea > 0) chiSquareName += Math.pow(notChineseNameInArea - expectedNotChineseNameInArea, 2) / expectedNotChineseNameInArea;\nif (expectedNotChineseNameNotInArea > 0) chiSquareName += Math.pow(notChineseNameNotInArea - expectedNotChineseNameNotInArea, 2) / expectedNotChineseNameNotInArea;\n\nlet chiSquareCuisine = 0;\nif (expectedCuisineAndInArea > 0) chiSquareCuisine += Math.pow(hasCuisineAndInArea - expectedCuisineAndInArea, 2) / expectedCuisineAndInArea;\nif (expectedCuisineNotInArea > 0) chiSquareCuisine += Math.pow(hasCuisineNotInArea - expectedCuisineNotInArea, 2) / expectedCuisineNotInArea;\nif (expectedNotCuisineInArea > 0) chiSquareCuisine += Math.pow(notCuisineInArea - expectedNotCuisineInArea, 2) / expectedNotCuisineInArea;\nif (expectedNotCuisineNotInArea > 0) chiSquareCuisine += Math.pow(notCuisineNotInArea - expectedNotCuisineNotInArea, 2) / expectedNotCuisineNotInArea;\n\nconst chiSquare = chiSquareName + chiSquareCuisine;\n\n// Déterminer la significativité\nconst chiSquareThreshold = 3.84; // Pour p < 0.05, dl=1\nconst isFilteringValid = chiSquare > chiSquareThreshold;\n\n// Filtrer les restaurants \nlet results = [];\nfor (let item of inputData) {\n  const isChineseRestaurant = item.json.isChineseRestaurant || false;\n\n  // uniquement les restaurants marqués comme chinois\n  if (isChineseRestaurant) {\n    results.push({\n      json: {\n        ...item.json,\n        chiSquare: chiSquare.toFixed(2),\n        isFilteringValid: isFilteringValid\n      }\n    });\n  }\n}\n\nif (results.length === 0) {\n  results.push({\n    json: {\n      message: \"Aucun restaurant n'a été filtré comme authentiquement chinois (χ² = \" + chiSquare.toFixed(2) + \", seuil = \" + chiSquareThreshold + \")\",\n      isFilteringValid: isFilteringValid\n    }\n  });\n}\n\nreturn results;"
+      },
+      "id": "7c3e91a2-1e99-4026-af0e-8bb44f805291",
+      "name": "khi deux",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        540,
+        1000
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputData = $input.all();\n\nconst chineseAreas = [\n  \"behoririka\",\n  \"ankorondrano\",\n  \"ivandry\",\n  \"antsakaviro\",\n  \"analakely\",\n  \"ambodifilaho\"\n];\n\nconst chineseKeywords = [\n  \"chine\",\n  \"chinois\",\n  \"china\",\n  \"chinese\",\n  \"dynastie\",\n  \"shandong\",\n  \"saigon\",\n  \"orient\",\n  \"dragon\",\n  \"muraille\",\n  \"jonquille\",\n  \"fleur\",\n  \"bol\",\n  \"eurasie\"\n];\n\nconst chineseCuisineKeywords = [\n  \"dim sum\",\n  \"nouilles\",\n  \"canard laqué\",\n  \"porc aigre-doux\",\n  \"riz cantonais\",\n  \"poulet général tao\",\n  \"tofu mapo\",\n  \"wonton\",\n  \"raviolis chinois\",\n  \"baozi\",\n  \"authentique chinois\"\n];\n\nconst chineseAreaCoords = [\n  { name: \"behoririka\", latRange: [-18.91, -18.87], lonRange: [47.50, 47.54] },\n  { name: \"ankorondrano\", latRange: [-18.89, -18.85], lonRange: [47.51, 47.55] },\n  { name: \"ivandry\", latRange: [-18.89, -18.85], lonRange: [47.53, 47.57] }\n];\n\nconst trueCriteriaThreshold = 3; //3 criteres sur 6\n\nlet results = [];\n\nfor (let item of inputData) {\n  const nom = item.json.nom ? item.json.nom.toLowerCase() : \"\";\n  const hasChineseName = chineseKeywords.some(keyword => nom.includes(keyword.toLowerCase()));\n\n  const adresse = item.json.adresse ? item.json.adresse.toLowerCase() : \"\";\n  const isInChineseAreaByAddress = chineseAreas.some(area => adresse.includes(area.toLowerCase()));\n\n  const latitude = parseFloat(item.json.latitude) || 0;\n  const longitude = parseFloat(item.json.longitude) || 0;\n  const isInChineseAreaByCoords = chineseAreaCoords.some(area => \n    latitude >= area.latRange[0] && latitude <= area.latRange[1] &&\n    longitude >= area.lonRange[0] && longitude <= area.lonRange[1]\n  );\n\n  const hasChineseCuisine = item.json.types && Array.isArray(item.json.types) && item.json.types.includes(\"chinese\" || \"Mandarin\" || \"Asian\");\n\n  const reviews = item.json.reviews && Array.isArray(item.json.reviews) ? item.json.reviews : [];\n  const hasChineseReviews = reviews.some(review => {\n    const reviewText = review.text ? review.text.toLowerCase() : \"\";\n    return chineseCuisineKeywords.some(keyword => reviewText.includes(keyword.toLowerCase()));\n  });\n\n  const hasChineseMenuLanguage = false;\n  const hasChineseDecor = false;\n\n  const hasChineseCharacters = /[\\u4E00-\\u9FFF]/.test(nom);\n  const hasExplicitChinese = chineseKeywords.some(keyword => {\n    const regex = new RegExp(`\\\\b${keyword}\\\\b`, 'i'); \n    return regex.test(nom);\n  });\n\n  let isChineseRestaurant = false;\n  let trueCriteriaCount = 0;\n\n  if (hasChineseCharacters || hasExplicitChinese) {\n    isChineseRestaurant = true;\n  } \n  else {\n    if (isInChineseAreaByAddress) \n      trueCriteriaCount++;\n    if (isInChineseAreaByCoords)\n      trueCriteriaCount++;\n    if (hasChineseCuisine) \n      trueCriteriaCount++;\n    if (hasChineseReviews) \n      trueCriteriaCount++;\n    if (hasChineseMenuLanguage)\n      trueCriteriaCount++;\n    if (hasChineseDecor)\n      trueCriteriaCount++;\n\n    isChineseRestaurant = trueCriteriaCount >= trueCriteriaThreshold;\n  }\n\n  results.push({\n    json: {\n      ...item.json,\n      isChineseRestaurant: isChineseRestaurant,\n      trueCriteriaCount: trueCriteriaCount,\n      checks: {\n        hasChineseName: hasChineseName,\n        isInChineseAreaByAddress: isInChineseAreaByAddress,\n        isInChineseAreaByCoords: isInChineseAreaByCoords,\n        hasChineseCuisine: hasChineseCuisine,\n        hasChineseReviews: hasChineseReviews,\n        hasChineseMenuLanguage: hasChineseMenuLanguage,\n        hasChineseDecor: hasChineseDecor,\n        hasChineseCharacters: hasChineseCharacters,\n        hasExplicitChinese: hasExplicitChinese\n      }\n    }\n  });\n}\n\nreturn results;"
+      },
+      "id": "75e5d5bd-edcb-41b2-899a-e5ec33edaa2e",
+      "name": "verification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        920,
+        700
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Binaire",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Binaire": {
+      "main": [
+        [
+          {
+            "node": "verification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "khi deux": {
+      "main": [
+        [
+          {
+            "node": "affichage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "verification": {
+      "main": [
+        [
+          {
+            "node": "khi deux",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "affichage": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b7686df7-303f-46a3-a706-a4c374541637",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "625f09f8eeaa98e8522e94bab42106747fb1bccf30b68bba43d0cbef588c89f7"
+  },
+  "id": "dfRg0TGF6KHyq1Gn",
+  "tags": []
+}
