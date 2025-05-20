@@ -1,0 +1,50 @@
+[
+ 
+  {
+    "name": "Le Grand Restaurant de Chine",
+    "address": "Tsiadana / Ampasanimalo, Antananarivo",
+    "photo": "https://via.placeholder.com/300x200?text=Grand+Restaurant"
+  },
+  {
+    "name": "Restaurants Le Jasmin-Analakely",
+    "address": "Analakely, Antananarivo",
+    "photo": "https://www.facebook.com/photo/?fbid=912895374178628&set=a.488534023281434"
+  },
+   {
+    "name": "La Muraille de Chine",
+    "address": "1, avenue de l'Indépendance Analakely, Tana-Antananarivo",
+    "photo": "https://via.placeholder.com/300x200?text=La+Muraille+de+Chine"
+  },
+  {
+    "name": "La Jonquille",
+    "address": "Ambodifilao, Antananarivo",
+    "photo": "https://via.placeholder.com/300x200?text=La+Jonquille"
+  },
+  {
+    "name": "La Dynastie",
+    "address": "Andavamamba, Antananarivo",
+    "photo": "https://via.placeholder.com/300x200?text=La+Dynastie"
+  },
+  {
+    "name": "Bon Appétit",
+    "address": "Antsakaviro, en face de la station Total, Antananarivo",
+    "photo": "https://via.placeholder.com/300x200?text=Bon+Appétit"
+  },
+  {
+    "name": "La Bastide Blanche",
+    "address": "Androhibe, Antananarivo",
+    "photo": "https://via.placeholder.com/300x200?text=La+Bastide+Blanche"
+  },
+  {
+    "name": "Tanà Saïgon",
+    "address": "Isoraka, Antananarivo",
+    "photo": "https://via.placeholder.com/300x200?text=Tanà+Saïgon"
+  },
+  {
+    "name": "Le Muguet",
+    "address": "Ambodifilao, Antananarivo",
+    "photo": "https://via.placeholder.com/300x200?text=Le+Muguet"
+  }
+   
+]
+
