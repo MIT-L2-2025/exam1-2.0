@@ -1,0 +1,273 @@
+{
+  "name": "restau_chinois",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "9049ab4b-8023-436f-b165-2410ede629ac",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "const maxPages = 5;\nconst output = [];\nfor (let i = 0; i <= maxPages * 20; i += 20) {\n  output.push({ json: { start: i } });\n}\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "id": "10466622-cff9-40b8-a3b8-b4ea258e1b06",
+      "name": "Pagination"
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        380,
+        0
+      ],
+      "id": "87b9432d-4965-4e80-ad80-f4259d05454a",
+      "name": "Delay Between Requests",
+      "webhookId": "deeb4484-1eb2-4777-9b96-58fd5d80dd65"
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search.json?engine=google_maps&q=restaurant+chinois+antananarivo",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "restaurant chinois Antananarivo"
+            },
+            {
+              "name": "key",
+              "value": "3473c7f33ea61c15e29e4e1de420bb7d499354d0c02ee1ab38a40abd04163401"
+            },
+            {
+              "name": "start",
+              "value": "={{ $json.start }}"
+            },
+            {
+              "name": "ll",
+              "value": "@-18.792,47.5079,15z"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        200
+      ],
+      "id": "16c6b5b8-f27c-426a-842c-aa36943f0e3e",
+      "name": "Recuperation Donnee"
+    },
+    {
+      "parameters": {
+        "jsCode": "const allResults = $input.all().flatMap(item => {\n  const localResults = item.json?.local_results || [];\n  return localResults.map(result => ({\n    json: {\n      nom: result.title || '',\n      adresse: result.address || '',\n      téléphone: result.phone || 'Non disponible',\n      latitude: result.gps_coordinates?.latitude || null,\n      longitude: result.gps_coordinates?.longitude || null,\n      site_web: result.website || 'Non disponible',\n      image: result.thumbnail || 'https://via.placeholder.com/400x250?text=Pas+d%27image',\n      type: result.type || ''\n    }\n  }));\n});\nreturn allResults;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        40
+      ],
+      "id": "c8b050ae-ba21-449c-8199-8a4a50b1a351",
+      "name": "Extract Data"
+    },
+    {
+      "parameters": {
+        "jsCode": "const restaurants = $input.all().map(item => item.json);\n\nfunction contientCaracteresChinois(texte) {\n    if (!texte) return false;\n    const regexChinois = /[\\u4e00-\\u9fff\\u3400-\\u4dbf\\uf900-\\ufaff]/;\n    return regexChinois.test(texte);\n}\n\nfunction detecterExclusions(nom, adresse) {\n    if (!nom) return false;\n    nom = nom.toLowerCase();\n    const exclusions = ['pizza', 'pizzeria', 'italien', 'sushi', 'japonais', 'burger', 'malgache', 'traditionnel', 'français', 'bistro', 'kebab', 'indien', 'thaï', 'ethiopien', 'africain', 'américain', 'mexicain', 'grec', 'libanais', 'fast food', 'café', 'patisserie'];\n    const restaurantsNonChinois = ['la varangue', 'sakamanga', 'ku de ta', 'la terrasse', 'le carnivore', 'citizen', 'gastro pizza'];\n    for (const exclusion of exclusions) {\n        if (nom.includes(exclusion)) return true;\n    }\n    for (const resto of restaurantsNonChinois) {\n        if (nom.includes(resto)) return true;\n    }\n    return false;\n}\n\nfunction calculerScoreRestaurant(result) {\n    let score = 0;\n    const detailsScore = [];\n    const nom = result.nom ? result.nom.toLowerCase() : '';\n    const adresse = result.adresse ? result.adresse.toLowerCase() : '';\n    if (detecterExclusions(nom, adresse)) {\n        score = 0;\n        detailsScore.push('Restaurant exclu car clairement non-chinois (-100)');\n        result.detailsScore = detailsScore;\n        return score;\n    }\n    if (result.type && result.type.toLowerCase().includes('chinese')) {\n        score += 40;\n        detailsScore.push('Type de la description officielle identifié comme \"Chinese restaurant\" (+40)');\n    }\n    const motsChinois = ['dragon', 'jade', 'wok', 'chinois', 'chine', 'sichuan', 'canton', 'mandarin', 'pekin', 'beijing', 'shanghai', 'panda', 'bambou', 'chinese', 'asia', 'asian', 'asie', 'asiatique', 'imperial', 'empire', 'dynastie', 'fortune', 'lotus', 'bonheur', 'hong', 'kong', 'taiwan', 'muraille', 'palais', 'perle', 'golden', 'garden', 'ming', 'happy', 'lucky', 'new'];\n    const motsClés = ['wok', 'dragon', 'chinois', 'chine', 'pekin', 'beijing', 'shanghai', 'canton', 'sichuan'];\n    motsClés.forEach(mot => {\n        if (nom.includes(mot)) {\n            score += 15;\n            detailsScore.push(`Nom contient le mot-clé majeur '${mot}' (+15)`);\n        }\n    });\n    motsChinois.forEach(mot => {\n        if (!motsClés.includes(mot) && nom.includes(mot)) {\n            score += 5;\n            detailsScore.push(`Nom contient '${mot}' (+5)`);\n        }\n    });\n    if (contientCaracteresChinois(nom)) {\n        score += 25;\n        detailsScore.push('Caractères chinois dans le nom (+25)');\n    }\n    const restaurantsConfirmes = ['dragon d\\'or', 'perle de chine', 'new china', 'sichuan', 'wok inn', 'le panda', 'ming', 'hong kong', 'great wall', 'lotus', 'golden dragon', 'china town', 'chinatown', 'bambou d\\'or', 'jardin de chine', 'palais imperial', 'fortune', 'bonheur'];\n    for (const r of restaurantsConfirmes) {\n        if (nom.includes(r)) {\n            score += 40;\n            detailsScore.push(`Restaurant chinois confirmé: \"${r}\" (+40)`);\n            break;\n        }\n    }\n    const quartiersChinois = ['behoririka', 'analakely', '67ha', 'antaninarenina', 'tsaralalana'];\n    quartiersChinois.forEach(quartier => {\n        if (adresse.includes(quartier)) {\n            score += 10;\n            detailsScore.push(`Dans quartier à forte présence chinoise: '${quartier}' (+10)`);\n        }\n    });\n    if (result.latitude && result.longitude) {\n        const lat = parseFloat(result.latitude);\n        const lng = parseFloat(result.longitude);\n        const zonesChinoises = [\n            {minLat: -18.915, maxLat: -18.905, minLng: 47.520, maxLng: 47.530, name: 'Behoririka'},\n            {minLat: -18.905, maxLat: -18.890, minLng: 47.510, maxLng: 47.525, name: 'Tsaralalana'},\n            {minLat: -18.920, maxLat: -18.905, minLng: 47.525, maxLng: 47.535, name: 'Analakely'}\n        ];\n        for (const zone of zonesChinoises) {\n            if (lat > zone.minLat && lat < zone.maxLat && lng > zone.minLng && lng < zone.maxLng) {\n                score += 20;\n                detailsScore.push(`Localisation confirmée dans ${zone.name}, zone à forte présence chinoise (+20)`);\n                break;\n            }\n        }\n    }\n    result.detailsScore = detailsScore;\n    return Math.min(Math.max(score, 0), 100);\n}\n\nfunction determinerType(score) {\n    if (score >= 70) return {text: \"🔴 Chinois confirmé\", class: \"confiance-max\"};\n    if (score >= 50) return {text: \"🟠 Probablement chinois\", class: \"confiance-élevée\"};\n    if (score >= 30) return {text: \"🟡 Influence chinoise possible\", class: \"confiance-moyenne\"};\n    return {text: \"⚪ Peu probable\", class: \"confiance-faible\"};\n}\n\nrestaurants.forEach(restaurant => {\n    restaurant.score_confiance = calculerScoreRestaurant(restaurant);\n    const type = determinerType(restaurant.score_confiance);\n    restaurant.type = type.text;\n    restaurant.typeClass = type.class;\n    restaurant.est_chinois = restaurant.score_confiance >= 50;\n});\n\nreturn restaurants.map(restaurant => ({ json: restaurant }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        240
+      ],
+      "id": "78fab11b-f718-477c-93d7-389c2eeb7faa",
+      "name": "Score Restaurants"
+    },
+    {
+      "parameters": {
+        "jsCode": "const restaurants = $input.all().map(item => item.json);\nreturn restaurants.filter(restaurant => restaurant.score_confiance >= 30).map(restaurant => ({ json: restaurant }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        440
+      ],
+      "id": "2b0e7c3c-d923-468c-a8c9-e6c355cdad62",
+      "name": "Filter Restaurants"
+    },
+    {
+      "parameters": {
+        "jsCode": "const restaurants = $input.all().map(item => item.json);\n\nlet htmlContent = `\n<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n    <meta charset=\"UTF-8\" />\n    <title>Restaurants Chinois à Antananarivo</title>\n näm: 'Antananarivo' }\n    <link rel=\"stylesheet\" href=\"https://unpkg.com/leaflet@1.9.4/dist/leaflet.css\" />\n    <style>\n        body, html { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #f1f1f1; }\n        h1 { text-align: center; font-size: 2.5rem; margin-top: 40px; margin-bottom: 30px; color: #ffffff; letter-spacing: 1px; }\n        .container { max-width: 1200px; margin: auto; padding: 20px; }\n        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px; }\n        .card { background-color: #1e1e1e; border-radius: 16px; padding: 20px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4); transition: transform 0.3s ease, box-shadow 0.3s ease; overflow: hidden; }\n        .card:hover { transform: translateY(-8px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); }\n        .card h2 { margin-top: 0; font-size: 1.5rem; color: #ff6b6b; margin-bottom: 10px; }\n        .info { margin: 8px 0; font-size: 0.95rem; line-height: 1.5; color: #ccc; }\n        .label { display: inline-block; width: 90px; font-weight: bold; color: #aaa; }\n        .score { margin-top: 10px; padding: 8px; text-align: center; font-size: 1.2em; border-radius: 4px; color: white; }\n        .confiance-max { background-color: #2e7d32; }\n        .confiance-élevée { background-color: #689f38; }\n        .confiance-moyenne { background-color: #f57c00; }\n        .confiance-faible { background-color: #d32f2f; }\n        .restaurant-photo { width: 100%; height: 200px; object-fit: cover; border-radius: 12px; margin-top: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); }\n        .map { height: 200px; margin-top: 15px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); }\n        .details-btn { background: #333; color: white; border: none; padding: 8px 15px; margin: 10px 0; border-radius: 4px; cursor: pointer; transition: background 0.3s; }\n        .details-btn:hover { background: #444; }\n        .details-score { display: none; background: #252525; padding: 12px; border-radius: 6px; margin-top: 8px; font-size: 0.9em; }\n        .detail-item { margin-bottom: 6px; padding-left: 10px; border-left: 3px solid #ff6b6b; }\n        .filtres { margin-bottom: 30px; text-align: center; }\n        .filtre-btn { background: #333; color: white; border: none; padding: 10px 20px; margin: 0 10px; border-radius: 4px; cursor: pointer; transition: background 0.3s; }\n        .filtre-btn.active { background: #ff6b6b; }\n        .stats { background: #252525; padding: 15px 25px; border-radius: 10px; margin-bottom: 30px; text-align: center; }\n        .search-box { margin-bottom: 20px; text-align: center; }\n        .search-input { padding: 10px 15px; width: 60%; background: #333; border: 1px solid #555; border-radius: 4px; color: white; font-size: 1rem; }\n        .search-input::placeholder { color: #aaa; }\n        @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } .label { display: block; width: 100%; } .search-input { width: 90%; } }\n    </style>\n</head>\n<body>\n<div class=\"container\">\n    <h1>Restaurants Chinois à Antananarivo</h1>\n    <div class=\"stats\">\n        <p>Total de restaurants trouvés: <strong>${restaurants.length}</strong> | Restaurants chinois confirmés: <strong>${restaurants.filter(r => r.score_confiance >= 70).length}</strong> | Restaurants probablement chinois: <strong>${restaurants.filter(r => r.score_confiance >= 50 && r.score_confiance < 70).length}</strong></p>\n    </div>\n    <div class=\"search-box\">\n        <input type=\"text\" class=\"search-input\" id=\"searchInput\" placeholder=\"Rechercher un restaurant...\">\n    </div>\n    <div class=\"filtres\">\n        <button class=\"filtre-btn active\" data-filtre=\"tous\">Tous</button>\n        <button class=\"filtre-btn\" data-filtre=\"confirme\">Chinois confirmés</button>\n        <button class=\"filtre-btn\" data-filtre=\"probable\">Probablement chinois</button>\n        <button class=\"filtre-btn\" data-filtre=\"possible\">Influence chinoise possible</button>\n    </div>\n    <div class=\"grid\">\n`;\nrestaurants.sort((a, b) => b.score_confiance - a.score_confiance);\nrestaurants.forEach((restaurant, index) => {\n    const photoUrl = restaurant.image && restaurant.image !== \"Pas de photo disponible\" ? restaurant.image : 'https://via.placeholder.com/400x250?text=Pas+d%27image';\n    let filtreClass;\n    if (restaurant.score_confiance >= 70) filtreClass = 'confirme';\n    else if (restaurant.score_confiance >= 50) filtreClass = 'probable';\n    else if (restaurant.score_confiance >= 30) filtreClass = 'possible';\n    else filtreClass = 'autre';\n    htmlContent += `\n        <div class=\"card\" data-categorie=\"${filtreClass}\" data-nom=\"${restaurant.nom || ''}\" data-adresse=\"${restaurant.adresse || ''}\">\n            <h2>${restaurant.nom || 'Nom inconnu'}</h2>\n            <div class=\"info\"><span class=\"label\">Adresse :</span> ${restaurant.adresse || 'Non disponible'}</div>\n            <div class=\"info\"><span class=\"label\">Téléphone :</span> ${restaurant.téléphone || 'Non disponible'}</div>\n            <div class=\"score ${restaurant.typeClass}\">${restaurant.type} (${restaurant.score_confiance}/100)</div>\n            <button class=\"details-btn\" onclick=\"toggleDetails(${index})\">▼ Détails du score</button>\n            <div id=\"details-${index}\" class=\"details-score\">${restaurant.detailsScore.map(d => `<div class=\"detail-item\">${d}</div>`).join('')}</div>\n            <img src=\"${photoUrl}\" alt=\"Photo de ${restaurant.nom || 'Restaurant'}\" class=\"restaurant-photo\" />\n            <div id=\"map-${index}\" class=\"map\"></div>\n        </div>\n    `;\n});\nhtmlContent += `\n    </div>\n</div>\n<script src=\"https://unpkg.com/leaflet@1.9.4/dist/leaflet.js\"></script>\n<script>\n    const mapData = ${JSON.stringify(restaurants.map(r => ({lat: parseFloat(r.latitude), lng: parseFloat(r.longitude), nom: r.nom || 'Inconnu', adresse: r.adresse || ''})))};\n    function initMaps() {\n        mapData.forEach((data, index) => {\n            if (!isNaN(data.lat) && !isNaN(data.lng)) {\n                const map = L.map('map-' + index).setView([data.lat, data.lng], 15);\n                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution: '© OpenStreetMap contributors'}).addTo(map);\n                L.marker([data.lat, data.lng]).addTo(map).bindPopup('<b>' + data.nom.replace(/'/g, '\\\\\\'') + '</b><br>' + data.adresse.replace(/'/g, '\\\\\\'') + '');\n            } else {\n                document.getElementById('map-' + index).style.display = 'none';\n            }\n        });\n    }\n    function toggleDetails(index) {\n        const details = document.getElementById('details-' + index);\n        details.style.display = details.style.display === 'none' ? 'block' : 'none';\n    }\n    document.querySelectorAll('.filtre-btn').forEach(btn => {\n        btn.addEventListener('click', function() {\n            document.querySelectorAll('.filtre-btn').forEach(b => b.classList.remove('active'));\n            this.classList.add('active');\n            const filtre = this.dataset.filtre;\n            const cards = document.querySelectorAll('.card');\n            cards.forEach(card => {\n                if (filtre === 'tous') {\n                    card.style.display = 'block';\n                } else {\n                    card.style.display = card.dataset.categorie === filtre ? 'block' : 'none';\n                }\n            });\n        });\n    });\n    document.getElementById('searchInput').addEventListener('input', function() {\n        const searchTerm = this.value.toLowerCase();\n        const cards = document.querySelectorAll('.card');\n        cards.forEach(card => {\n            const nom = card.dataset.nom.toLowerCase();\n            const adresse = card.dataset.adresse.toLowerCase();\n            if (nom.includes(searchTerm) || adresse.includes(searchTerm)) {\n                card.style.display = 'block';\n            } else {\n                card.style.display = 'none';\n            }\n        });\n        if (searchTerm) {\n            document.querySelectorAll('.filtre-btn').forEach(b => b.classList.remove('active'));\n        } else {\n            const activeFilter = document.querySelector('.filtre-btn.active');\n            if (activeFilter) {\n                activeFilter.click();\n            } else {\n                document.querySelector('[data-filtre=\"tous\"]').click();\n            }\n        }\n    });\n    window.addEventListener('load', initMaps);\n</script>\n</body>\n</html>\n`;\nreturn [{ json: { htmlContent, fileName: 'restaurants_chinois_tana.html' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        940,
+        240
+      ],
+      "id": "a85904a8-4976-418b-b8b5-bb1ae422da60",
+      "name": "Generate HTML"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { htmlContent, fileName } = $input.first().json;\nconst binaryData = Buffer.from(htmlContent).toString('base64');\nreturn [{ json: { fileName }, binary: { data: { data: binaryData, mimeType: 'text/html', fileName } } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        240
+      ],
+      "id": "b920a727-fac9-4cca-9cbe-42a30b2abc9b",
+      "name": "Convert to Binary"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "restaurants_chinois_tana.html",
+        "options": {
+          "append": false
+        }
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        80
+      ],
+      "id": "e3ce3d27-ca68-4383-8cc7-de0358c8084a",
+      "name": "Write HTML File"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Pagination",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pagination": {
+      "main": [
+        [
+          {
+            "node": "Delay Between Requests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delay Between Requests": {
+      "main": [
+        [
+          {
+            "node": "Recuperation Donnee",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recuperation Donnee": {
+      "main": [
+        [
+          {
+            "node": "Extract Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Data": {
+      "main": [
+        [
+          {
+            "node": "Score Restaurants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score Restaurants": {
+      "main": [
+        [
+          {
+            "node": "Filter Restaurants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Restaurants": {
+      "main": [
+        [
+          {
+            "node": "Generate HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate HTML": {
+      "main": [
+        [
+          {
+            "node": "Convert to Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to Binary": {
+      "main": [
+        [
+          {
+            "node": "Write HTML File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e06c158e-ac28-4344-a40d-811d2d411969",
+  "meta": {
+    "instanceId": "55c63b58f0f3e044983157f86a4707a9bd000f58cc841812a7ddb1b6c6dc4043"
+  },
+  "id": "OEvHOg4V765LPogC",
+  "tags": []
+}
