@@ -1,0 +1,202 @@
+{
+  "name": "resto4",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        -20
+      ],
+      "id": "4e3955c8-fc7a-4d16-a1f8-654b8482c7ee",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "path": "4d98a6e5-db2e-4950-92c6-4094deeef4b8",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        160
+      ],
+      "id": "18cfe2f2-eb73-4ca3-9ac4-113ee983c398",
+      "name": "Webhook",
+      "webhookId": "4d98a6e5-db2e-4950-92c6-4094deeef4b8"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $node[\"Collect and Process Data\"].json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        760,
+        -120
+      ],
+      "id": "c7496fdf-beb7-48b6-aa46-37d9587b7565",
+      "name": "Respond to Webhook",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "serpApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "Chinese restaurant"
+            },
+            {
+              "name": "engine",
+              "value": "google_maps"
+            },
+            {
+              "name": "type",
+              "value": "search"
+            },
+            {
+              "name": "ll",
+              "value": "@-18.8792,47.5079,20z"
+            },
+            {
+              "name": "tbm",
+              "value": "isch"
+            },
+            {
+              "name": "start",
+              "value": "={{ $json.start }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        280,
+        -120
+      ],
+      "id": "2d3b8447-8098-46d7-a679-d55f129baf22",
+      "name": "HTTP Request",
+      "credentials": {
+        "serpApi": {
+          "id": "VOtUj2QAgpgyNytj",
+          "name": "SerpAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  { json: { start: 0 } },\n  { json: { start: 20 } },\n  { json: { start: 40 } },\n  { json: { start: 60 } },\n  { json: { start: 80 } }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        -20
+      ],
+      "id": "8ae8658e-857d-425a-810b-c40650aa860b",
+      "name": "Generate Start Values"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Récupère tous les items provenant du nœud \"HTTP Request\"\nlet allItems = $items();\n\n// Initialise un tableau pour stocker tous les résultats\nlet allResults = [];\n\n// Parcourt chaque item et concatène les \"local_results\"\nfor (const item of allItems) {\n  if (item.json.local_results) {\n    allResults = allResults.concat(item.json.local_results);\n  }\n}\n\n// Dictionnaire de mots-clés pour identifier les restaurants chinois\nconst chineseKeywords = [\n  \"chinois\",\n  \"chinese\",\n  \"sino\",\n  \"chine\",\n  \"mandarin\",\n  \"cantonese\",\n  \"szechuan\",\n  \"dim sum\",\n  \"noodle\",\n  \"wok\"\n];\n\n// Position actuelle par défaut (Antananarivo)\nconst userLat = -18.8792;\nconst userLng = 47.5079;\n\n// Clé API Google Maps (remplacez par votre clé API)\nconst googleMapsApiKey = 'AIzaSyD26SBDx0y_zVHM30FGrC0BiQm6RrJwpmM';\n\n// Génère les cartes de visite pour chaque restaurant\nlet cardsHtml = '';\nfor (const item of allResults) {\n  // Gestion des champs avec des valeurs par défaut\n  const title = item.title || 'Nom inconnu';\n  const phone = item.phone || 'Téléphone indisponible';\n  const address = item.address || 'Adresse indisponible';\n  const latitude = item.gps_coordinates?.latitude || null;\n  const longitude = item.gps_coordinates?.longitude || null;\n  const reviewsLink = item.reviews_link || '#';\n  const photosLink = item.photos_link || '#';\n  const website = item.website || '#';\n  const type = item.type || 'Type inconnu';\n  const hours = item.hours || 'Horaires non disponibles';\n  const rating = item.rating || 'Non évalué';\n  const reviews = item.reviews || '0';\n\n  // Vérifie les occurrences des mots-clés dans title et type\n  const textToSearch = `${title.toLowerCase()} ${type.toLowerCase()}`;\n  let keywordCount = 0;\n  for (const keyword of chineseKeywords) {\n    if (textToSearch.includes(keyword.toLowerCase())) {\n      keywordCount++;\n    }\n  }\n\n  // Génère l’URL de l’itinéraire\n  let mapEmbedUrl = '';\n  if (latitude && longitude) {\n    mapEmbedUrl = `https://www.google.com/maps/embed/v1/directions?key=${googleMapsApiKey}&origin=${userLat},${userLng}&destination=${latitude},${longitude}&mode=driving`;\n  }\n\n  // Génère les URLs pour Street View et la vue satellite\n  let streetViewUrl = '';\n  let satelliteUrl = '';\n  if (latitude && longitude) {\n    streetViewUrl = `https://www.google.com/maps/embed/v1/streetview?key=${googleMapsApiKey}&location=${latitude},${longitude}&heading=34&pitch=10`;\n    satelliteUrl = `https://www.google.com/maps/embed/v1/view?key=${googleMapsApiKey}&center=${latitude},${longitude}&zoom=18&maptype=satellite`;\n  }\n\n  // Ajoute la carte HTML avec le nombre d'occurrences\n  if(keywordCount > 1){\n  cardsHtml += `\n    <div class=\"card\">\n      <h3>${title}</h3>\n      <p>${type} | ${phone}</p>\n      <p>Note: ${rating} (${reviews} avis)</p>\n      <p><strong>Correspondance chinoise: ${keywordCount} mot(s)-clé(s)</strong></p>\n      <div>\n        ${latitude && longitude ? `\n          <a href=\"${streetViewUrl}\" target=\"_blank\">Voir en Street View</a>\n        ` : 'Carte non disponible (coordonnées manquantes)'}\n      </div>\n      <div>\n        <h4>Détails du restaurant</h4>\n        <p>📍 Adresse : ${address}</p>\n        <p>⏰ Horaires : ${hours}</p>\n        <p>📍 Latitude : ${latitude || 'Non disponible'}</p>\n        <p>📍 Longitude : ${longitude || 'Non disponible'}</p>\n        <p><a href=\"${website}\" target=\"_blank\">🌐 Site Web</a></p>\n        <p><a href=\"${reviewsLink}\" target=\"_blank\">⭐ Voir les avis</a></p>\n        <p><a href=\"${photosLink}\" target=\"_blank\">📸 Voir les photos</a></p>\n      </div>\n    </div>\n  `;}\n}\n\n// Crée la page HTML complète\nconst html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <title>Restaurants Chinois à Antananarivo</title>\n  <style>\n    .card { border: 1px solid #ccc; padding: 10px; margin: 10px; }\n    .card h3 { margin: 0; }\n  </style>\n</head>\n<body>\n  ${cardsHtml}\n</body>\n</html>\n`;\n\n// Retourne le HTML\nreturn [{ json: { html: html } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        -120
+      ],
+      "id": "5c7338bc-5a47-4ddc-b6f5-ed5b71970c63",
+      "name": "Collect and Process Data"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Generate Start Values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Generate Start Values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Collect and Process Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Start Values": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect and Process Data": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "008d378b-4da7-458f-bf5e-d3f16dc35bc1",
+  "meta": {
+    "instanceId": "7b8038436113ad3c629a37c6411b1dcb8cfce05e3cc7a52ef11d832f4457a320"
+  },
+  "id": "LzVHsW7uJogKvCN3",
+  "tags": []
+}
